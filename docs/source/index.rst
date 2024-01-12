@@ -1,10 +1,10 @@
-欢迎来到片上系统 (System on Chip, SoC) 流片 (tapeout) 全流程弱保软 (弱智保姆软件) 教程！
+Welcome to SoC Tapeout Babysisting Tutorial!
 ===================================
 
 
-本教程旨在给没有流片经验的宝宝们提供全面的文档参考。
+本教程旨在给没有流片经验的宝宝们提供全面的全流程文档参考。
 
-Contents
+目录
 --------
 
 .. toctree::
@@ -12,5 +12,3 @@ Contents
    fpga_verfication
    frontend
    backend
-   usage
-   api
