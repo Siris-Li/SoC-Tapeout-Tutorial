@@ -17,3 +17,4 @@ Contents
    fpga_verfication
    frontend
    backend
+   appendix
