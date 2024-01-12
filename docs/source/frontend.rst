@@ -10,7 +10,7 @@ This is frontend.
 Clock
 --------------
 
-1. ``core_config.tcl``中``set rm_clock_pin io_clock``的``io_clock``为全局时钟信号名称，需要与RTL中的时钟信号名称对应。
+:code:`core_config.tcl` 中 :code:`set rm_clock_pin io_clock` 的 :code:`io_clock` 为全局时钟信号名称，需要与RTL中的时钟信号名称对应。
 
 
 .. note::
