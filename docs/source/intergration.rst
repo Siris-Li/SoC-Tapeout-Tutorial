@@ -3,14 +3,14 @@ SoC Intergration
 
 SoC Intergration here.
 
-What is SoC?
+Overview
 --------------
 
 
 
 
 
-Components of SoC
+Components
 --------------
 
 
