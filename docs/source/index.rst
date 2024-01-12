@@ -3,6 +3,7 @@ Welcome to PKUIC SoC Tapeout Tutorial!
 ===================================
 
 Test English!
+Test build from Pull Request!
 测试中文
 本教程旨在给没有流片经验的宝宝们提供全面的文档参考。
 **Lumache** (/lu'make/) is a Python library for cooks and food lovers
