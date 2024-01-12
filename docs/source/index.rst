@@ -13,8 +13,9 @@ Contents
 --------
 
 .. toctree::
+   cpu
    intergration
-   fpga_verfication
+   fpga
    frontend
    backend
    appendix
