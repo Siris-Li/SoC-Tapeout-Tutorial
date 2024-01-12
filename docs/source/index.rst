@@ -1,4 +1,4 @@
-欢迎来到片上系统 (System on Chip, SoC) 流片 (tapeout) 全流程弱保软 (弱智保姆软件) 教程！
+Welcome to SoC Tapeout Babysisting Tutorial!
 ===================================
 
 
