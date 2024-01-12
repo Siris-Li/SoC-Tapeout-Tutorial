@@ -6,16 +6,18 @@ Welcome to SoC Tapeout Babysisting Tutorial!
 
 .. note::
 
-   This tutorial is under active development.
+	This tutorial is under active development.
 
 
 Contents
 --------
 
 .. toctree::
-   cpu
-   intergration
-   fpga
-   frontend
-   backend
-   appendix
+	:numbered:
+
+	cpu
+	intergration
+	fpga
+	frontend
+	backend
+	appendix
