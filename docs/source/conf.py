@@ -3,8 +3,8 @@
 # -- Project information
 
 project = 'SoC Tapeout Tutorial'
-copyright = '2021, Graziella'
-author = 'Graziella'
+copyright = 'Peking University'
+author = 'Mingxuan Li'
 
 release = '0.1'
 version = '0.1.0'
