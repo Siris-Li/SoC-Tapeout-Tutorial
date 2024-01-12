@@ -17,5 +17,3 @@ Contents
    fpga_verfication
    frontend
    backend
-   usage
-   api
