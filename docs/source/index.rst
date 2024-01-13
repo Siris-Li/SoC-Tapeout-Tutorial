@@ -67,4 +67,5 @@ Contents
 	fpga
 	frontend
 	backend
+	layout
 	appendix
