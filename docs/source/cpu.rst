@@ -56,7 +56,7 @@ Control Status Register
 体系结构的课程中一定会学习到寄存器堆（Register File），这些寄存器也被称为 GPR（General Purpose Register）。
 实际上还有另一个“寄存器堆”——控制状态寄存器（CSR），它们被用来实现特权架构所带来的新特性，例如 :code:`mcause` 用于记录异常和中断的原因。
 除了处理特权架构，还有一些 CSR 用于标识处理器特性或测量性能，例如 :code:`mcycle` 用于记录运行周期数。
-
+CSR 记录了 CPU 当前的状态信息，因此对于仿真或者流片后验证都十分重要。
 
 Assembly
 ------------------
