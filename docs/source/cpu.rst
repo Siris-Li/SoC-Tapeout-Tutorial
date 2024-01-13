@@ -309,7 +309,7 @@ CVA6 支持很多的仿真器，因此我们需要指定比较的两个仿真器
 
 .. Hint::
 
-	如果你想知道 ``<cva6>/verif/sim/cva6.py`` 到底运行了什么，你可以在运行该文件时试着添加 ``--debug <your debug log output directory>``。
+	如果你想知道 ``<cva6>/verif/sim/cva6.py`` 到底运行了什么，你可以在运行该文件时试着添加 ``--debug <your debug log output directory>``，或者使用 ``pdb`` 添加断点，利用 debugger 来了解其运行顺序。
 
 你可以在任意路径下创建你自定义的 C 代码，例如 ``<custom path>/test.c``。
 接下来，你只需要进入 ``cva6.py`` 所在的路径并运行该文件即可。
