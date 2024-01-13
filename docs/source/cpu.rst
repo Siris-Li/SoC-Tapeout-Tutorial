@@ -85,7 +85,9 @@ Compiler & Assembler
 	在程序员视角下，32个GPR有不同于 x0 ~ x31 的名称，这被称为 ABI （Application Binary Interface）。
 
 
-以下是一段汇编::
+以下是一段汇编
+
+.. code-block:: assembly
 
 	.text 			# 指示符：进入代码节
 	.align 2 		# 指示符：将代码按 2^2 字节对齐
@@ -205,7 +207,9 @@ CVA6 Example
 Setup
 ^^^^^^^^^^^^
 
-1. 克隆仓库::
+1. 克隆仓库。
+
+.. code-block:: shell
 
 	$ git clone https://github.com/openhwgroup/cva6.git
 	$ cd cva6
@@ -222,7 +226,9 @@ Setup
 	学习如何使用 Git 是基本功，任何开源项目都会用到它。
 	因此，在继续下一步之前，强烈建议理解该步骤中 ``git`` 的行为。
 
-2. 安装 GCC 工具链::
+2. 安装 GCC 工具链。
+
+.. code-block:: shell
 
 	$ cd util/gcc-toolchain-builder
 	$ export RISCV=<your desire RISC-V toolchain directory>
@@ -243,11 +249,15 @@ Setup
 	如果你不确定你是否真的创建了该变量，可以在 shell 中输入 ``echo $RISCV``，输出应该和你所设置的值一致。
 	强烈建议你去了解常见的环境变量以及其作用，例如 ``PATH``，这对理解 shell 来说很重要。
 
-3. 安装必要的包::
+3. 安装必要的包。
+
+.. code-block:: shell
 
 	$ sudo apt-get install help2man device-tree-compiler
 
-4. 安装 Python 的环境依赖::
+4. 安装 Python 的环境依赖。
+
+.. code-block:: shell
 
 	$ cd <cva6>
 	$ pip3 install -r verif/sim/dv/requirements.txt
@@ -257,7 +267,9 @@ Setup
 	我们非常建议你安装 `miniconda` 用来管理 Python 的环境。
 	Python 不同版本之间并不兼容，因此最好每个项目都有一个独立的 Python 环境。
 
-5. 安装 Spike 和 Verilator::
+5. 安装 Spike 和 Verilator。
+
+.. code-block:: shell
 
 	$ export DV_SIMULATORS=veri-testharness,spike
 	$ bash verif/regress/smoke-tests.sh
@@ -275,7 +287,9 @@ Setup
 	然后再研究 ``export VAR=xx`` 和 ``VAR=xx`` 的区别。
 	理解了上述两个区别之后，你就能明白为什么有时候环境变量丢失了。
 
-6. 运行回归测试::
+6. 运行回归测试。
+
+.. code-block:: shell
 	
 	$ export DV_SIMULATORS=veri-testharness,spike
 	$ bash verif/regress/dv-riscv-arch-test.sh
@@ -298,7 +312,9 @@ CVA6 支持很多的仿真器，因此我们需要指定比较的两个仿真器
 	如果你想知道 ``<cva6>/verif/sim/cva6.py`` 到底运行了什么，你可以在运行该文件时试着添加 ``--debug <your debug log output directory>``。
 
 你可以在任意路径下创建你自定义的 C 代码，例如 ``<custom path>/test.c``。
-接下来，你只需要进入 ``cva6.py`` 所在的路径并运行该文件即可::
+接下来，你只需要进入 ``cva6.py`` 所在的路径并运行该文件即可。
+
+.. code-block:: shell
 
 	$ cd <cva6>/verif/sim
 	$ python cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --c_tests <custom path>/test.c --linker=../tests/custom/common/test.ld --gcc_opts="-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -g ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S -lgcc -I../tests/custom/env -I../tests/custom/common"
