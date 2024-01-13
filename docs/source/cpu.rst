@@ -283,3 +283,43 @@ Setup
 你应该会发现 ``<cva6>/verif/regress/smoke-tests.sh`` 不仅安装了仿真器，还安装了许多测试用例。
 在 ``<cva6>/verif/regress`` 目录下，有很多回归测试的脚本，这些都可以运行。
 我们建议你在运行回归测试之前，先了解脚本跑了什么指令，这对之后自定义测试用例有很大帮助。
+
+Standalone Simulation
+^^^^^^^^^^^^^^^^
+
+如果你看过回归测试的脚本，很容易就发现 CVA6 Core 的回归测试是通过多次调用 ``<cva6>/verif/sim/cva6.py`` 来完成的。
+我们自己写的 C 代码也需要通过 ``<cva6>/verif/sim/cva6.py`` 来进行 DiffTest。
+CVA6 支持很多的仿真器，因此我们需要指定比较的两个仿真器。
+一般而言，我们使用 Spike 和 Verilator，指定方式为添加环境变量：``export DV_SIMULATORS=veri-testharness,spike``。
+
+
+.. Hint::
+
+	如果你想知道 ``<cva6>/verif/sim/cva6.py`` 到底运行了什么，你可以在运行该文件时试着添加 ``--debug <your debug log output directory>``。
+
+你可以在任意路径下创建你自定义的 C 代码，例如 ``<custom path>/test.c``。
+接下来，你只需要进入 ``cva6.py`` 所在的路径并运行该文件即可::
+
+	$ cd <cva6>/verif/sim
+	$ python cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --c_tests <custom path>/test.c --linker=../tests/custom/common/test.ld --gcc_opts="-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -g ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S -lgcc -I../tests/custom/env -I../tests/custom/common"
+
+这个 python 文件会进行如下5件事情：
+
+1. 你之前安装的 riscv-none-elf-gcc 会将 ``test.c`` 编译成一个对象文件（``test.o``），它包含了源代码编译后的机器代码，但还没有被链接成可以执行的程序。如果你想查看你所写的 C 程序对应的汇编代码，你可以通过 ``riscv-none-elf-objdump -d test.o`` 生成该对象文件的反汇编文件（disassembly）。
+
+2. riscv-none-elf-objcopy 会把 ``test.o`` 转换为一个二进制文件 ``test.bin``，这个二进制文件可以被直接加载到内存中执行。
+
+3. 调用 Verilator 和仿真环境，加载二进制文件，记录仿真过程，输出到 ``<verilator output path>/test.csv``。
+
+4. 调用 Spike 和仿真环境，加载二进制文件，记录仿真过程，输出到 ``<spike output path>/test.csv``。
+
+5. 将 Verilator 和 Spike 生成的 CSV 文件进行比较，输出测试结果。
+
+.. Important::
+
+	本小节中各种文件的路径请根据 shell 中的输出来寻找。
+	同时，我们强烈推荐你了解仿真过程中 GCC，Verialtor，Spike 所接受参数的意义。
+
+
+
+
