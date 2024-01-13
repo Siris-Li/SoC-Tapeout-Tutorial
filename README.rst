@@ -1,7 +1,7 @@
 SoC Tapeout Tutorial
 =======================================
 
-Please visit this website to read our babysisting tutorial:
+Please visit this website to read our babysitting tutorial:
 
 https://pkuic-soc-tapeout-tutorial.readthedocs.io/zh/latest/
 
