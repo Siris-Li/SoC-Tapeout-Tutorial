@@ -199,7 +199,7 @@ CVA6 Example
 	如没有特别说明，默认运行环境为 Linux。
 	Linux 下很多操作都是在终端（terminal）中进行，终端中运行的是 shell，Ubuntu 默认的 shell 为 bash。
 	命令行操作有一定的学习成本，但请你一定坚持。
-	我会尽可能解释接下来的命令行操作，但绝大部分基础的内容仍需要你自行学习。
+	我们会尽可能解释接下来的命令行操作，但绝大部分基础的内容仍需要你自行学习。
 
 
 Setup
@@ -239,7 +239,7 @@ Setup
 
 .. Important::
 
-	`export` 指令是非常常见的 shell 指令，它为 shell 创建了环境变量（environmnet variable）。
+	``export`` 指令是非常常见的 shell 指令，它为 shell 创建了环境变量（environmnet variable）。
 	如果你不确定你是否真的创建了该变量，可以在 shell 中输入 ``echo $RISCV``，输出应该和你所设置的值一致。
 	强烈建议你去了解常见的环境变量以及其作用，例如 ``PATH``，这对理解 shell 来说很重要。
 
