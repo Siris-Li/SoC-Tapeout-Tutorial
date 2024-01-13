@@ -34,7 +34,9 @@ RISC-V 编译器得知当前硬件包含哪些扩展后，便可为该硬件生�
 
 .. note::
 
-    RV32MFDA 是 RISC-V 的标准扩展，它们与 RV32I 统称为 RV32G（G 代表 general）。
+	RV32MFDA 是 RISC-V 的标准扩展，它们与 RV32I 统称为 RV32G（G 代表 general）。
+	如果你注意过 ``RISC-V gcc`` 中的 ``-march`` 选项，你可能会发现它形如 ``rv32imac_zba_zbb_zbs_zbc_zicsr_zifencei``。
+	这是因为，除了标准扩展之外，还有其他可选扩展，例如 ``zb*`` 指的是 “B” 标准扩展（Bit-manipulation）。
 
 Privilege
 ^^^^^^^^^^^^^^^^^
@@ -146,20 +148,20 @@ Open-Sourced Tools
 Instruction Set Simulator
 ######################
 
-Spike <https://github.com/riscv-software-src/riscv-isa-sim> 是一个开源的 RISC-V ISA 仿真器。
+`Spike <https://github.com/riscv-software-src/riscv-isa-sim>`__ 是一个开源的 RISC-V ISA 仿真器。
 它通过软件来模拟 CPU 指令的行为，属于行为级的仿真，速度较快。
 我们通常认为 ISS 运行的结果是正确的。
 
 RTL Simulator
 #####################
 
-Verilator <https://www.veripool.org/verilator> 是一个开源的 Verilog/SystemVerilog 仿真器。
+`Verilator <https://www.veripool.org/verilator>`__ 是一个开源的 Verilog/SystemVerilog 仿真器。
 它将 RTL 编译为 C++ 或 SystemC 后再运行仿真，结果是周期精准的，但速度较慢。
 
 Environment
 ##################
 
-RISCV-DV <https://github.com/chipsalliance/riscv-dv> 是一个随机的指令生成器，它可以给待测试的模块提供验证环境。
+`RISCV-DV <https://github.com/chipsalliance/riscv-dv>`__ 是一个随机的指令生成器，它可以给待测试的模块提供验证环境。
 
 Methodology
 ^^^^^^^^^^^^^^^^
@@ -176,11 +178,11 @@ Regression Testing
 为了保证加入的新功能没有影响到已有功能的实现, 还需要重新运行测试用例，这个过程称为回归测试。
 RISC-V 有多种回归测试的用例：
 
-- RISC-V Compliance <https://github.com/lowRISC/riscv-compliance>。
+- `RISC-V Compliance <https://github.com/lowRISC/riscv-compliance>`__
 
-- RISC-V Tests <https://github.com/riscv-software-src/riscv-tests>。
+- `RISC-V Tests <https://github.com/riscv-software-src/riscv-tests>`__
 
-- RISC-V Architecure Tests <https://github.com/riscv-non-isa/riscv-arch-test>。
+- `RISC-V Architecure Tests <https://github.com/riscv-non-isa/riscv-arch-test>`__
 
 .. note::
 
@@ -189,10 +191,95 @@ RISC-V 有多种回归测试的用例：
 CVA6 Example
 ----------------
 
-CVA6 <https://github.com/openhwgroup/cva6> 是一个经过流片验证的开源 RISC-V CPU。
+`CVA6 <https://github.com/openhwgroup/cva6>`__ 是一个经过流片验证的开源 RISC-V CPU。
 我们以该 CPU 为例，介绍如何仿真开源的 CPU。
 
 .. note::
 
-	Under active development!
+	如没有特别说明，默认运行环境为 Linux。
+	Linux 下很多操作都是在终端（terminal）中进行，终端中运行的是 shell，Ubuntu 默认的 shell 为 bash。
+	命令行操作有一定的学习成本，但请你一定坚持。
+	我会尽可能解释接下来的命令行操作，但绝大部分基础的内容仍需要你自行学习。
 
+
+Setup
+^^^^^^^^^^^^
+
+1. 克隆仓库::
+
+	$ git clone https://github.com/openhwgroup/cva6.git
+	$ cd cva6
+	$ git submodule update --init --recursive
+
+.. note::
+
+	我们使用 ``<cva6>`` 代指该项目的根目录。
+	例如你的 ``cva6`` 项目位于 ``/home/user/cva6``，则 ``<cva6> == /home/user/cva6``。
+
+.. Important::
+
+	Git 是最流行的代码版本管理工具，著名的 Github 就是依托于 Git 建立的。
+	学习如何使用 Git 是基本功，任何开源项目都会用到它。
+	因此，在继续下一步之前，强烈建议理解该步骤中 ``git`` 的行为。
+
+2. 安装 GCC 工具链::
+
+	$ cd util/gcc-toolchain-builder
+	$ export RISCV=<your desire RISC-V toolchain directory>
+	$ sudo apt-get install autoconf automake autotools-dev curl git libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool bc zlib1g-dev
+	$ sh get-toolchain.sh
+	$ sh build-toolchain.sh $RISCV
+
+你需要将 ``<your desire RISC-V toolchain directory>`` 换成一个真实的目录，它可以没有被创建，例如 ``/home/user/cva6/riscv-toolchain``。
+
+.. note::
+
+	实际上 ``<cva6>/util/gcc-toolchain-builder>`` 中有 ``README.md``，你可以自行根据其内容安装 GCC 工具链，我们也推荐你这么做，因为99%开源项目并没有本教程这样的保姆式文档。
+
+
+.. Important::
+
+	`export` 指令是非常常见的 shell 指令，它为 shell 创建了环境变量（environmnet variable）。
+	如果你不确定你是否真的创建了该变量，可以在 shell 中输入 ``echo $RISCV``，输出应该和你所设置的值一致。
+	强烈建议你去了解常见的环境变量以及其作用，例如 ``PATH``，这对理解 shell 来说很重要。
+
+3. 安装必要的包::
+
+	$ sudo apt-get install help2man device-tree-compiler
+
+4. 安装 Python 的环境依赖::
+
+	$ cd <cva6>
+	$ pip3 install -r verif/sim/dv/requirements.txt
+
+.. Important::
+
+	我们非常建议你安装 `miniconda` 用来管理 Python 的环境。
+	Python 不同版本之间并不兼容，因此最好每个项目都有一个独立的 Python 环境。
+
+5. 安装 Spike 和 Verilator::
+
+	$ export DV_SIMULATORS=veri-testharness,spike
+	$ bash verif/regress/smoke-tests.sh
+
+在运行这条指令之前，请先查看该脚本的内容，试图理解这个脚本的行为。
+请参考 `CVA6 Repo Issue 1757 <https://github.com/openhwgroup/cva6/issues/1757>`__，理解并修改对应的脚本。
+如果你安装成功，你会在 ``<cva6>/tools`` 路径下发现 Spike 和 Verilator 的文件夹。
+在此之后，你应该会发现 ``<cva6>/verif/regress/smoke-tests.sh`` 会报出 Error，这是因为环境变量设置的原因，你可以查看 shell 中的输出文本来定位具体是哪个环境变量。
+
+如果你并不想 Debug，那么请在运行这条指令之前先运行 ``source verif/sim/setup-env.sh``。
+
+.. Hint::
+
+	如果你发现有时候运行 ``<cva6>/verif/regress/smoke-tests.sh`` 会报环境变量没有设置的问题，你可以研究一下 ``bash script.sh``，``sh script.sh``，``./script.sh`` 和 ``source script.sh`` 之间的联系和区别。
+	然后再研究 ``export VAR=xx`` 和 ``VAR=xx`` 的区别。
+	理解了上述两个区别之后，你就能明白为什么有时候环境变量丢失了。
+
+6. 运行回归测试::
+	
+	$ export DV_SIMULATORS=veri-testharness,spike
+	$ bash verif/regress/dv-riscv-arch-test.sh
+
+你应该会发现 ``<cva6>/verif/regress/smoke-tests.sh`` 不仅安装了仿真器，还安装了许多测试用例。
+在 ``<cva6>/verif/regress`` 目录下，有很多回归测试的脚本，这些都可以运行。
+我们建议你在运行回归测试之前，先了解脚本跑了什么指令，这对之后自定义测试用例有很大帮助。
