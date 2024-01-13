@@ -85,9 +85,9 @@ Compiler & Assembler
 	在程序员视角下，32个GPR有不同于 x0 ~ x31 的名称，这被称为 ABI （Application Binary Interface）。
 
 
-以下是一段汇编
+下面是一段汇编
 
-.. code-block:: assembly
+.. code-block::
 
 	.text 			# 指示符：进入代码节
 	.align 2 		# 指示符：将代码按 2^2 字节对齐
@@ -215,7 +215,7 @@ Setup
 
 1. 克隆仓库。
 
-.. code-block:: shell
+.. code-block::
 
 	$ git clone https://github.com/openhwgroup/cva6.git
 	$ cd cva6
@@ -257,13 +257,13 @@ Setup
 
 3. 安装必要的包。
 
-.. code-block:: shell
+.. code-block::
 
 	$ sudo apt-get install help2man device-tree-compiler
 
 4. 安装 Python 的环境依赖。
 
-.. code-block:: shell
+.. code-block::
 
 	$ cd <cva6>
 	$ pip3 install -r verif/sim/dv/requirements.txt
@@ -275,7 +275,7 @@ Setup
 
 5. 安装 Spike 和 Verilator。
 
-.. code-block:: shell
+.. code-block::
 
 	$ export DV_SIMULATORS=veri-testharness,spike
 	$ bash verif/regress/smoke-tests.sh
@@ -295,7 +295,7 @@ Setup
 
 6. 运行回归测试。
 
-.. code-block:: shell
+.. code-block::
 	
 	$ export DV_SIMULATORS=veri-testharness,spike
 	$ bash verif/regress/dv-riscv-arch-test.sh
@@ -320,7 +320,7 @@ CVA6 支持很多的仿真器，因此我们需要指定比较的两个仿真器
 你可以在任意路径下创建你自定义的 C 代码，例如 ``<custom path>/test.c``。
 接下来，你只需要进入 ``cva6.py`` 所在的路径并运行该文件即可。
 
-.. code-block:: shell
+.. code-block::
 
 	$ cd <cva6>/verif/sim
 	$ python cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --c_tests <custom path>/test.c --linker=../tests/custom/common/test.ld --gcc_opts="-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -g ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S -lgcc -I../tests/custom/env -I../tests/custom/common"
@@ -340,7 +340,7 @@ CVA6 支持很多的仿真器，因此我们需要指定比较的两个仿真器
 .. Important::
 
 	本小节中各种文件的路径请根据 shell 中的输出来寻找。
-	同时，我们强烈推荐你了解仿真过程中 Python 文件是怎么调用 Makefile，Makefile 是怎么调用 gcc，verilator 和 spike 的。
+	同时，我们强烈推荐你了解仿真过程中 Python 文件是怎么调用 Makefile，Makefile 是怎么调用 gcc，verilator 和 spike，最终完成仿真的。
 
 
 Verilator
@@ -350,7 +350,7 @@ Verilator
 
 .. code-block::
 
-	verilator --no-timing --no-timing verilator_config.vlt -f core/Flist.cva6 /home/sirisli/cva6/corev_apu/tb/ariane_axi_pkg.sv /home/sirisli/cva6/corev_apu/tb/axi_intf.sv /home/sirisli/cva6/corev_apu/register_interface/src/reg_intf.sv /home/sirisli/cva6/corev_apu/tb/ariane_soc_pkg.sv /home/sirisli/cva6/corev_apu/riscv-dbg/src/dm_pkg.sv /home/sirisli/cva6/corev_apu/tb/ariane_axi_soc_pkg.sv /home/sirisli/cva6/corev_apu/src/ariane.sv /home/sirisli/cva6/corev_apu/bootrom/bootrom.sv /home/sirisli/cva6/corev_apu/clint/axi_lite_interface.sv /home/sirisli/cva6/corev_apu/clint/clint.sv /home/sirisli/cva6/corev_apu/fpga/src/axi2apb/src/axi2apb_wrap.sv /home/sirisli/cva6/corev_apu/fpga/src/axi2apb/src/axi2apb.sv /home/sirisli/cva6/corev_apu/fpga/src/axi2apb/src/axi2apb_64_32.sv /home/sirisli/cva6/corev_apu/fpga/src/apb_timer/apb_timer.sv /home/sirisli/cva6/corev_apu/fpga/src/apb_timer/timer.sv /home/sirisli/cva6/corev_apu/fpga/src/axi_slice/src/axi_w_buffer.sv /home/sirisli/cva6/corev_apu/fpga/src/axi_slice/src/axi_b_buffer.sv /home/sirisli/cva6/corev_apu/fpga/src/axi_slice/src/axi_slice_wrap.sv /home/sirisli/cva6/corev_apu/fpga/src/axi_slice/src/axi_slice.sv /home/sirisli/cva6/corev_apu/fpga/src/axi_slice/src/axi_single_slice.sv /home/sirisli/cva6/corev_apu/fpga/src/axi_slice/src/axi_ar_buffer.sv /home/sirisli/cva6/corev_apu/fpga/src/axi_slice/src/axi_r_buffer.sv /home/sirisli/cva6/corev_apu/fpga/src/axi_slice/src/axi_aw_buffer.sv /home/sirisli/cva6/corev_apu/src/axi_riscv_atomics/src/axi_riscv_amos.sv /home/sirisli/cva6/corev_apu/src/axi_riscv_atomics/src/axi_riscv_atomics.sv /home/sirisli/cva6/corev_apu/src/axi_riscv_atomics/src/axi_res_tbl.sv /home/sirisli/cva6/corev_apu/src/axi_riscv_atomics/src/axi_riscv_lrsc_wrap.sv /home/sirisli/cva6/corev_apu/src/axi_riscv_atomics/src/axi_riscv_amos_alu.sv /home/sirisli/cva6/corev_apu/src/axi_riscv_atomics/src/axi_riscv_lrsc.sv /home/sirisli/cva6/corev_apu/src/axi_riscv_atomics/src/axi_riscv_atomics_wrap.sv /home/sirisli/cva6/corev_apu/axi_mem_if/src/axi2mem.sv /home/sirisli/cva6/corev_apu/rv_plic/rtl/rv_plic_target.sv /home/sirisli/cva6/corev_apu/rv_plic/rtl/rv_plic_gateway.sv /home/sirisli/cva6/corev_apu/rv_plic/rtl/plic_regmap.sv /home/sirisli/cva6/corev_apu/rv_plic/rtl/plic_top.sv /home/sirisli/cva6/corev_apu/riscv-dbg/src/dmi_cdc.sv /home/sirisli/cva6/corev_apu/riscv-dbg/src/dmi_jtag.sv /home/sirisli/cva6/corev_apu/riscv-dbg/src/dmi_jtag_tap.sv /home/sirisli/cva6/corev_apu/riscv-dbg/src/dm_csrs.sv /home/sirisli/cva6/corev_apu/riscv-dbg/src/dm_mem.sv /home/sirisli/cva6/corev_apu/riscv-dbg/src/dm_sba.sv /home/sirisli/cva6/corev_apu/riscv-dbg/src/dm_top.sv /home/sirisli/cva6/corev_apu/riscv-dbg/debug_rom/debug_rom.sv /home/sirisli/cva6/corev_apu/register_interface/src/apb_to_reg.sv /home/sirisli/cva6/vendor/pulp-platform/axi/src/axi_multicut.sv /home/sirisli/cva6/vendor/pulp-platform/common_cells/src/rstgen_bypass.sv /home/sirisli/cva6/vendor/pulp-platform/common_cells/src/rstgen.sv /home/sirisli/cva6/vendor/pulp-platform/common_cells/src/addr_decode.sv /home/sirisli/cva6/vendor/pulp-platform/common_cells/src/stream_register.sv /home/sirisli/cva6/vendor/pulp-platform/axi/src/axi_cut.sv /home/sirisli/cva6/vendor/pulp-platform/axi/src/axi_join.sv /home/sirisli/cva6/vendor/pulp-platform/axi/src/axi_delayer.sv /home/sirisli/cva6/vendor/pulp-platform/axi/src/axi_to_axi_lite.sv /home/sirisli/cva6/vendor/pulp-platform/axi/src/axi_id_prepend.sv /home/sirisli/cva6/vendor/pulp-platform/axi/src/axi_atop_filter.sv /home/sirisli/cva6/vendor/pulp-platform/axi/src/axi_err_slv.sv /home/sirisli/cva6/vendor/pulp-platform/axi/src/axi_mux.sv /home/sirisli/cva6/vendor/pulp-platform/axi/src/axi_demux.sv /home/sirisli/cva6/vendor/pulp-platform/axi/src/axi_xbar.sv /home/sirisli/cva6/vendor/pulp-platform/common_cells/src/cdc_2phase.sv /home/sirisli/cva6/vendor/pulp-platform/common_cells/src/spill_register_flushable.sv /home/sirisli/cva6/vendor/pulp-platform/common_cells/src/spill_register.sv /home/sirisli/cva6/vendor/pulp-platform/common_cells/src/deprecated/fifo_v1.sv /home/sirisli/cva6/vendor/pulp-platform/common_cells/src/deprecated/fifo_v2.sv /home/sirisli/cva6/vendor/pulp-platform/common_cells/src/stream_delay.sv /home/sirisli/cva6/vendor/pulp-platform/common_cells/src/lfsr_16bit.sv /home/sirisli/cva6/vendor/pulp-platform/tech_cells_generic/src/deprecated/cluster_clk_cells.sv /home/sirisli/cva6/vendor/pulp-platform/tech_cells_generic/src/deprecated/pulp_clk_cells.sv /home/sirisli/cva6/vendor/pulp-platform/tech_cells_generic/src/rtl/tc_clk.sv /home/sirisli/cva6/corev_apu/tb/ariane_testharness.sv /home/sirisli/cva6/corev_apu/tb/ariane_peripherals.sv /home/sirisli/cva6/corev_apu/tb/rvfi_tracer.sv /home/sirisli/cva6/corev_apu/tb/common/uart.sv /home/sirisli/cva6/corev_apu/tb/common/SimDTM.sv /home/sirisli/cva6/corev_apu/tb/common/SimJTAG.sv +define+ corev_apu/tb/common/mock_uart.sv +incdir+corev_apu/axi_node  --unroll-count 256 -Wall -Werror-PINMISSING -Werror-IMPLICIT -Wno-fatal -Wno-PINCONNECTEMPTY -Wno-ASSIGNDLY -Wno-DECLFILENAME -Wno-UNUSED -Wno-UNOPTFLAT -Wno-BLKANDNBLK -Wno-style  -DPRELOAD=1     -LDFLAGS "-L/home/sirisli/cva6/gcc-toolchain/lib -L/home/sirisli/cva6/tools/spike/lib -Wl,-rpath,/home/sirisli/cva6/gcc-toolchain/lib -Wl,-rpath,/home/sirisli/cva6/tools/spike/lib -lfesvr -lriscv  -lpthread " -CFLAGS "-I/include -I/include -I/home/sirisli/cva6/tools/verilator-v5.008/share/verilator/include/vltstd -I/home/sirisli/cva6/gcc-toolchain/include -I/home/sirisli/cva6/tools/spike/include -std=c++17 -I../corev_apu/tb/dpi -O3 -DVL_DEBUG -I/home/sirisli/cva6/tools/spike"   --cc --vpi  +incdir+/home/sirisli/cva6/vendor/pulp-platform/common_cells/include/  +incdir+/home/sirisli/cva6/vendor/pulp-platform/axi/include/  +incdir+/home/sirisli/cva6/corev_apu/register_interface/include/  +incdir+/home/sirisli/cva6/corev_apu/tb/common/  +incdir+/home/sirisli/cva6/vendor/pulp-platform/axi/include/  +incdir+/home/sirisli/cva6/verif/core-v-verif/lib/uvm_agents/uvma_rvfi/ --top-module ariane_testharness --threads-dpi none --Mdir work-ver -O3 --exe corev_apu/tb/ariane_tb.cpp corev_apu/tb/dpi/SimDTM.cc corev_apu/tb/dpi/SimJTAG.cc corev_apu/tb/dpi/remote_bitbang.cc corev_apu/tb/dpi/msim_helper.cc
+	verilator --no-timing --no-timing verilator_config.vlt -f core/Flist.cva6 <cva6>/corev_apu/tb/ariane_axi_pkg.sv <cva6>/corev_apu/tb/axi_intf.sv <cva6>/corev_apu/register_interface/src/reg_intf.sv <cva6>/corev_apu/tb/ariane_soc_pkg.sv <cva6>/corev_apu/riscv-dbg/src/dm_pkg.sv <cva6>/corev_apu/tb/ariane_axi_soc_pkg.sv <cva6>/corev_apu/src/ariane.sv <cva6>/corev_apu/bootrom/bootrom.sv <cva6>/corev_apu/clint/axi_lite_interface.sv <cva6>/corev_apu/clint/clint.sv <cva6>/corev_apu/fpga/src/axi2apb/src/axi2apb_wrap.sv <cva6>/corev_apu/fpga/src/axi2apb/src/axi2apb.sv <cva6>/corev_apu/fpga/src/axi2apb/src/axi2apb_64_32.sv <cva6>/corev_apu/fpga/src/apb_timer/apb_timer.sv <cva6>/corev_apu/fpga/src/apb_timer/timer.sv <cva6>/corev_apu/fpga/src/axi_slice/src/axi_w_buffer.sv <cva6>/corev_apu/fpga/src/axi_slice/src/axi_b_buffer.sv <cva6>/corev_apu/fpga/src/axi_slice/src/axi_slice_wrap.sv <cva6>/corev_apu/fpga/src/axi_slice/src/axi_slice.sv <cva6>/corev_apu/fpga/src/axi_slice/src/axi_single_slice.sv <cva6>/corev_apu/fpga/src/axi_slice/src/axi_ar_buffer.sv <cva6>/corev_apu/fpga/src/axi_slice/src/axi_r_buffer.sv <cva6>/corev_apu/fpga/src/axi_slice/src/axi_aw_buffer.sv <cva6>/corev_apu/src/axi_riscv_atomics/src/axi_riscv_amos.sv <cva6>/corev_apu/src/axi_riscv_atomics/src/axi_riscv_atomics.sv <cva6>/corev_apu/src/axi_riscv_atomics/src/axi_res_tbl.sv <cva6>/corev_apu/src/axi_riscv_atomics/src/axi_riscv_lrsc_wrap.sv <cva6>/corev_apu/src/axi_riscv_atomics/src/axi_riscv_amos_alu.sv <cva6>/corev_apu/src/axi_riscv_atomics/src/axi_riscv_lrsc.sv <cva6>/corev_apu/src/axi_riscv_atomics/src/axi_riscv_atomics_wrap.sv <cva6>/corev_apu/axi_mem_if/src/axi2mem.sv <cva6>/corev_apu/rv_plic/rtl/rv_plic_target.sv <cva6>/corev_apu/rv_plic/rtl/rv_plic_gateway.sv <cva6>/corev_apu/rv_plic/rtl/plic_regmap.sv <cva6>/corev_apu/rv_plic/rtl/plic_top.sv <cva6>/corev_apu/riscv-dbg/src/dmi_cdc.sv <cva6>/corev_apu/riscv-dbg/src/dmi_jtag.sv <cva6>/corev_apu/riscv-dbg/src/dmi_jtag_tap.sv <cva6>/corev_apu/riscv-dbg/src/dm_csrs.sv <cva6>/corev_apu/riscv-dbg/src/dm_mem.sv <cva6>/corev_apu/riscv-dbg/src/dm_sba.sv <cva6>/corev_apu/riscv-dbg/src/dm_top.sv <cva6>/corev_apu/riscv-dbg/debug_rom/debug_rom.sv <cva6>/corev_apu/register_interface/src/apb_to_reg.sv <cva6>/vendor/pulp-platform/axi/src/axi_multicut.sv <cva6>/vendor/pulp-platform/common_cells/src/rstgen_bypass.sv <cva6>/vendor/pulp-platform/common_cells/src/rstgen.sv <cva6>/vendor/pulp-platform/common_cells/src/addr_decode.sv <cva6>/vendor/pulp-platform/common_cells/src/stream_register.sv <cva6>/vendor/pulp-platform/axi/src/axi_cut.sv <cva6>/vendor/pulp-platform/axi/src/axi_join.sv <cva6>/vendor/pulp-platform/axi/src/axi_delayer.sv <cva6>/vendor/pulp-platform/axi/src/axi_to_axi_lite.sv <cva6>/vendor/pulp-platform/axi/src/axi_id_prepend.sv <cva6>/vendor/pulp-platform/axi/src/axi_atop_filter.sv <cva6>/vendor/pulp-platform/axi/src/axi_err_slv.sv <cva6>/vendor/pulp-platform/axi/src/axi_mux.sv <cva6>/vendor/pulp-platform/axi/src/axi_demux.sv <cva6>/vendor/pulp-platform/axi/src/axi_xbar.sv <cva6>/vendor/pulp-platform/common_cells/src/cdc_2phase.sv <cva6>/vendor/pulp-platform/common_cells/src/spill_register_flushable.sv <cva6>/vendor/pulp-platform/common_cells/src/spill_register.sv <cva6>/vendor/pulp-platform/common_cells/src/deprecated/fifo_v1.sv <cva6>/vendor/pulp-platform/common_cells/src/deprecated/fifo_v2.sv <cva6>/vendor/pulp-platform/common_cells/src/stream_delay.sv <cva6>/vendor/pulp-platform/common_cells/src/lfsr_16bit.sv <cva6>/vendor/pulp-platform/tech_cells_generic/src/deprecated/cluster_clk_cells.sv <cva6>/vendor/pulp-platform/tech_cells_generic/src/deprecated/pulp_clk_cells.sv <cva6>/vendor/pulp-platform/tech_cells_generic/src/rtl/tc_clk.sv <cva6>/corev_apu/tb/ariane_testharness.sv <cva6>/corev_apu/tb/ariane_peripherals.sv <cva6>/corev_apu/tb/rvfi_tracer.sv <cva6>/corev_apu/tb/common/uart.sv <cva6>/corev_apu/tb/common/SimDTM.sv <cva6>/corev_apu/tb/common/SimJTAG.sv +define+ corev_apu/tb/common/mock_uart.sv +incdir+corev_apu/axi_node  --unroll-count 256 -Wall -Werror-PINMISSING -Werror-IMPLICIT -Wno-fatal -Wno-PINCONNECTEMPTY -Wno-ASSIGNDLY -Wno-DECLFILENAME -Wno-UNUSED -Wno-UNOPTFLAT -Wno-BLKANDNBLK -Wno-style  -DPRELOAD=1     -LDFLAGS "-L<cva6>/gcc-toolchain/lib -L<cva6>/tools/spike/lib -Wl,-rpath,<cva6>/gcc-toolchain/lib -Wl,-rpath,<cva6>/tools/spike/lib -lfesvr -lriscv  -lpthread " -CFLAGS "-I/include -I/include -I<cva6>/tools/verilator-v5.008/share/verilator/include/vltstd -I<cva6>/gcc-toolchain/include -I<cva6>/tools/spike/include -std=c++17 -I../corev_apu/tb/dpi -O3 -DVL_DEBUG -I<cva6>/tools/spike"   --cc --vpi  +incdir+<cva6>/vendor/pulp-platform/common_cells/include/  +incdir+<cva6>/vendor/pulp-platform/axi/include/  +incdir+<cva6>/corev_apu/register_interface/include/  +incdir+<cva6>/corev_apu/tb/common/  +incdir+<cva6>/vendor/pulp-platform/axi/include/  +incdir+<cva6>/verif/core-v-verif/lib/uvm_agents/uvma_rvfi/ --top-module ariane_testharness --threads-dpi none --Mdir work-ver -O3 --exe corev_apu/tb/ariane_tb.cpp corev_apu/tb/dpi/SimDTM.cc corev_apu/tb/dpi/SimJTAG.cc corev_apu/tb/dpi/remote_bitbang.cc corev_apu/tb/dpi/msim_helper.cc
 
 接下来，我们会逐一介绍其中的每个参数。
 
@@ -369,4 +369,22 @@ Verilator
 - ``--threads-dpi``：指定 DPI 线程模式。
 - ``-Mdir``：输出目录的名称。
 - ``--exe``：链接用于生成可执行文件。
+
+.. hint::
+
+	更详细完整的参数列表，请查询 `官方文档 <https://verilator.org/guide/latest/index.html>`__。
+
+运行输出目录中的 ``Variane_testharness.mk`` 会生成一个可执行文件 ``Variane_testharness``。
+运行该文件：
+
+.. code-block::
+
+	<cva6>/work-ver/Variane_testharness   <cva6>/verif/sim/out_2024-01-13/directed_c_tests/test.o +debug_disable=1 +ntb_random_seed=1 +elf_file=<cva6>/verif/sim/out_<date>/directed_c_tests/test.o +tohost_addr=80001000
+
+其中的参数解释如下。
+
+- ``+debug_disable=1``：禁用调试功能。
+- ``+ntb_random_seed=1``：设置随机数生成器的种子。
+- ``+elf_file``：加载的 ELF 文件的路径。这个文件包含了要在仿真器中运行的程序的机器代码。
+
 
