@@ -158,7 +158,9 @@ RTL Simulator
 #####################
 
 `Verilator <https://www.veripool.org/verilator>`__ 是一个开源的 Verilog/SystemVerilog 仿真器。
-它将 RTL 编译为 C++ 或 SystemC 后再运行仿真，结果是周期精准的，但速度较慢。
+它将 RTL 编译为 C++ 或 SystemC 后再运行仿真。
+Verilator 是一个基于周期的仿真器，这意味着它不会评估单个时钟周期内的时间，也不会模拟精确的电路时序。
+相反，电路状态通常每个时钟周期评估一次，因此无法观察到任何周期内毛刺，并且不支持定时信号延迟。
 
 .. note::
 
