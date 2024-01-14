@@ -154,6 +154,13 @@ Instruction Set Simulator
 它通过软件来模拟 CPU 指令的行为，属于行为级的仿真，速度较快。
 我们通常认为 ISS 运行的结果是正确的。
 
+Spike 仿真器中实现了两个重要的组件 HTIF（Host-Target Interface）和 fesvr （Front-End Server）。
+它们在 Spike 仿真环境中有重要的作用，也可以作为单独的部件使用在其他的仿真环境中（如 Verilator）。
+
+- HTIF 是一种用于在宿主机（通常是一台运行仿真器的计算机）和目标机（被仿真的 RISC-V 处理器）之间进行通信的机制。在测试中，HTIF 通常用于从 RISC-V 测试程序传递信息到仿真环境（如 Spike）。例如，通过写入特定的内存地址（如 tohost 和 fromhost），测试程序可以向宿主机发送信号以指示测试结果或进行调试。
+- fesvr 是一个运行在宿主机上的软件，它作为仿真环境的一部分，用于与 RISC-V 目标机进行交互。fesvr 提供了一系列功能，包括加载程序到目标机、执行 I/O 操作以及处理目标机的系统调用请求。
+
+
 RTL Simulator
 #####################
 
@@ -161,6 +168,14 @@ RTL Simulator
 它将 RTL 编译为 C++ 或 SystemC 后再运行仿真。
 Verilator 是一个基于周期的仿真器，这意味着它不会评估单个时钟周期内的时间，也不会模拟精确的电路时序。
 相反，电路状态通常每个时钟周期评估一次，因此无法观察到任何周期内毛刺，并且不支持定时信号延迟。
+
+当使用 Verilator 对 RISC-V CPU 进行仿真并执行二进制文件时，流程大致如下：
+
+- fesvr 加载二进制文件到仿真的 CPU。
+- 仿真过程开始，CPU 开始执行加载的程序。
+- 程序运行过程中可能会有系统调用或 I/O 请求，这些通过 HTIF 传递给 fesvr 处理。
+- 如果程序需要向外部环境报告状态（如测试结果），它会写入特定的 tohost 地址。
+- Verilator 监视 tohost 地址，根据写入的值执行相应操作（例如，如果 tohost 指示测试结束，Verilator 可以结束仿真过程）。
 
 .. note::
 
@@ -170,6 +185,14 @@ Environment
 ##################
 
 `RISCV-DV <https://github.com/chipsalliance/riscv-dv>`__ 是一个随机的指令生成器，它可以给待测试的模块提供验证环境。
+
+``tohost`` 是一个常用于 RISC-V 测试的机制，它是一种特殊的内存映射寄存器或地址，用于与测试环境通信。
+在进行 RISC-V 的仿真或实际硬件测试时，``tohost`` 用于从正在运行的测试程序向测试环境（比如仿真器或测试框架）发送消息。
+这些消息通常包括测试结果、调试信息或控制命令。例如，当测试程序完成或遇到错误时，它会将特定的值写入 ``tohost`` 地址，测试环境监视这个地址，根据写入的值判断测试状态或执行相应的操作。
+
+在实际的硬件实现中，``tohost`` 并不是必须的，也不是 RISC-V 指令集架构（ISA）的一部分。
+真实的硬件系统通常不需要像 ``tohost`` 这样的仿真特定机制。
+硬件上的通信和调试功能通常是通过其他方式实现的，例如使用 JTAG 接口、串行端口、或者其他定制的硬件调试工具。
 
 Methodology
 ^^^^^^^^^^^^^^^^
@@ -386,5 +409,23 @@ Verilator
 - ``+debug_disable=1``：禁用调试功能。
 - ``+ntb_random_seed=1``：设置随机数生成器的种子。
 - ``+elf_file``：加载的 ELF 文件的路径。这个文件包含了要在仿真器中运行的程序的机器代码。
+- ``+tohost_addr``：指定 tohost 寄存器的地址映射。
 
+上述参数都是传递给在仿真 RISC-V CPU 上执行的程序的选项。
+
+.. note::
+	
+	在仿真环境中，尤其是在使用像 Spike 或 Verilator 这样的 RISC-V 仿真器时，向可执行文件传递参数常常会使用一个加号（+）作为前缀。
+	这种格式通常用于区分仿真器本身的参数和传递给仿真程序的参数。
+
+Spike
+###################
+
+调用 Spike 的指令为
+
+.. code-block::
+
+	LD_LIBRARY_PATH="$(realpath ../../tools/spike/lib):$LD_LIBRARY_PATH" <cva6>/tools/spike/bin/spike --steps=2000000  --log-commits --isa=rv32imac_zba_zbb_zbs_zbc_zicsr_zifencei -l <cva6>/verif/sim/out_<date>/directed_c_tests/hello_world.o
+
+- ``--log commits -l``：启动指令跟踪，并且每次指令提交时都会写入日志。
 
