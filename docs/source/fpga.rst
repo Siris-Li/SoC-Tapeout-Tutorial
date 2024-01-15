@@ -1,8 +1,7 @@
 FPGA Implementation
 =========
 
-
-This is FPGA implementation.
+Boot
 
 
 
