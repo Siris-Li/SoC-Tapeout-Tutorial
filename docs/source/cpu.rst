@@ -41,11 +41,25 @@ RISC-V 编译器得知当前硬件包含哪些扩展后，便可为该硬件生�
 Privilege
 ^^^^^^^^^^^^^^^^^
 
+
+`RISC-V 官方文档 <https://riscv.org/technical/specifications/>`__ 通常分为两大部分：非特权指令集（Unprivileged ISA）和特权指令集（Privileged ISA）。
+
+Unprivileged ISA
+#################
+
+这部分定义了所有执行模式下都可以使用的基本指令集。
+它包括整数、浮点、原子操作等基本指令，以及寄存器和基本的执行环境。
+这些指令集构成了RISC-V程序的核心，是所有RISC-V兼容设备必须支持的基础。
+
+Privileged ISA
+#################
+
 处理器的代码可以运行在不同等级的模式下，一般而言软件代码会默认运行在用户模式（*user mode*, U mode）下，该模式具有最低的权限。
 除此以外，还有监管模式（*supervisor mode*, S mode）和机器模式（*machine mode*, M mode）。
 操作系统一般运行在 S 模式下，而 M 模式则具有最高的特权，最重要的特性是拦截和处理异常（不寻常的运行时事件）。
 在 M 模式下运行的代码能完全访问内存、I/O 和底层系统功能，这对启动和配置系统是必不可少的。
 因此，M 模式是唯一一个所有标准 RISC-V 处理器都必须实现的特权模式。
+应用程序（在U-mode下运行）通常无法直接执行特权指令，而是通过系统调用（Syscall）机制请求操作系统（在S-mode或M-mode下运行）提供服务，如访问硬件或管理资源。
 
 .. note::
 
@@ -194,6 +208,11 @@ Environment
 真实的硬件系统通常不需要像 ``tohost`` 这样的仿真特定机制。
 硬件上的通信和调试功能通常是通过其他方式实现的，例如使用 JTAG 接口、串行端口、或者其他定制的硬件调试工具。
 
+``tohost`` 地址通常在以下几个地方设置：
+
+- 仿真环境: 在仿真环境（如 Spike）中，``tohost`` 地址需要在仿真器的内存映射中明确指定。这样仿真器可以捕捉到写入这个地址的操作，并据此处理测试结果。
+- 测试程序: 在编写测试程序时，``tohost`` 地址会被定义为一个全局变量或宏。测试程序通过向这个地址写入特定的值来与测试框架通信，比如表示测试通过或失败。
+
 Methodology
 ^^^^^^^^^^^^^^^^
 
@@ -266,6 +285,13 @@ Setup
 	$ sh build-toolchain.sh $RISCV
 
 你需要将 ``<your desire RISC-V toolchain directory>`` 换成一个真实的目录，它可以没有被创建，例如 ``/home/user/cva6/riscv-toolchain``。
+
+
+.. attention::
+
+	``riscv-none-elf-gcc`` 和 ``riscv64-unknown-elf-gcc`` 都是 RISC-V 架构的 GCC 编译器，但它们针对的 RISC-V 架构的位宽和目标系统可能有所不同。``riscv-none-elf-gcc``：这个编译器通常用于编译不依赖于特定操作系统的代码，例如嵌入式系统或裸机（bare-metal）系统的代码。"none" 表示没有目标操作系统。``riscv64-unknown-elf-gcc``：这个编译器针对的是 64 位的 RISC-V 架构，"64" 表示 64 位。"unknown" 表示目标系统的供应商未知。"elf" 表示目标文件格式是 ELF。这个编译器通常也用于编译不依赖于特定操作系统的代码。
+
+
 
 .. note::
 
@@ -412,6 +438,10 @@ Verilator
 - ``+tohost_addr``：指定 tohost 寄存器的地址映射。
 
 上述参数都是传递给在仿真 RISC-V CPU 上执行的程序的选项。
+
+.. note Important::
+
+	``tohost`` 地址需要从 ELF 文件中获取，具体的工具为 RISC-V GCC 中的 ``nm`` 命令。
 
 .. note::
 	
