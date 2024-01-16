@@ -524,7 +524,7 @@ exit 函数是一个标准的 C 库函数，它会结束程序的执行，并将
    
 下面是完整的 ``crt0.S`` 文件的内容。
 
-.. code-section::
+.. code-block::
 
    /* Make sure the vector table gets linked into the binary.  */
    .global vector_table
