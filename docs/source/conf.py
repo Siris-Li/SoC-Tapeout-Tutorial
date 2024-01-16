@@ -4,7 +4,7 @@
 
 project = 'SoC Tapeout Tutorial'
 copyright = 'Mingxuan Li'
-author = 'Mingxuan Li'
+author = '李明轩'
 
 release = '0.1'
 version = '0.1.0'
