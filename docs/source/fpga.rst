@@ -296,7 +296,7 @@ C Runtime Initialzation
 C 运行时文件 ``<cva6>/verif/bsp/crt0.S`` 提供 _start 函数，该函数是程序的入口点并执行以下任务：
 
 - 初始化全局和堆栈指针。
-- 将 ``vector_table`` 的地址存储在 ``mtvec``中，设置低两位为“0x1”以选择向量中断模式。
+- 将 ``vector_table`` 的地址存储在 ``mtvec`` 中，设置低两位为“0x1”以选择向量中断模式。
 - 将 BSS 部分清零。
 - 调用 C 构造函数的初始化并设置要调用的析构函数出口。它们在 C++ 中被广泛使用，但在 C 语言中并不常见。
 - 将 ``argc`` 和 ``argv`` 归零（堆栈未初始化，因此将它们归零防止未初始化的值可能会导致程序的结果与预期的参考结果不匹配）。
@@ -306,9 +306,9 @@ C 运行时文件 ``<cva6>/verif/bsp/crt0.S`` 提供 _start 函数，该函数�
 .. Tip::
 
    在 RISC-V 架构中，``mtvec`` 是一个特殊的寄存器，它用于存储中断向量表的地址。
-   当最低两位为 0x2 时，处理器会进入向量中断模式。
+   当最低两位为 0x1 时，处理器会进入向量中断模式（vectored）。
    中断向量表是一个包含了处理各种中断的函数地址的表，当发生中断时，处理器会根据 ``mtvec`` 寄存器中的地址找到中断向量表，然后跳转到相应的函数去处理中断。
-   这与直接模式不同，在直接模式下，所有的中断都会被送到同一个处理函数。
+   这与直接模式（direct）不同，在直接模式下，所有的中断都会被送到同一个处理函数。
 
 .. Tip::
 
@@ -366,7 +366,7 @@ C 运行时文件 ``<cva6>/verif/bsp/crt0.S`` 提供 _start 函数，该函数�
 ``auipc gp, %pcrel_hi(__global_pointer$)`` 和 ``addi gp, gp, %pcrel_lo(1b)`` 这两条指令用于初始化全局指针 gp。
 ``auipc`` 指令将 ``__global_pointer$`` 的高 20 位加到程序计数器 pc 上，然后将结果存储到 gp 中。
 ``addi`` 指令将 ``__global_pointer$`` 的低 12 位加到 gp 上，然后将结果存储到 gp 中。
-这样，gp 就被设置为了 __global_pointer$ 的地址。
+这样，gp 就被设置为了 ``__global_pointer$`` 的地址。
 
 .. note::
 
@@ -395,7 +395,7 @@ C 运行时文件 ``<cva6>/verif/bsp/crt0.S`` 提供 _start 函数，该函数�
 
    同样，``%pcrel_lo`` 是一个伪指令，用于获取一个符号相对于前一条 ``auipc`` 指令的低 12 位地址。
 
-   RISC-V 指令集中的 `auipc` 指令可以将一个 20 位的立即数（即常数）加到程序计数器（PC）上，然后将结果存储到一个寄存器中。
+   RISC-V 指令集中的 ``auipc`` 指令可以将一个 20 位的立即数（即常数）加到程序计数器（PC）上，然后将结果存储到一个寄存器中。
    然后，你可以使用 `addi` 指令，将一个 12 位的立即数加到这个寄存器上，从而得到一个完整的 32 位地址。
 
 ``la sp, __stack_end`` 用于初始化栈指针 sp。``la`` 是 "load address" 的缩写，它将 ``__stack_end`` 的地址加载到 sp 中。
@@ -620,6 +620,60 @@ Linker Script
 镜像文件（.img）通常是一个存储设备或文件系统的完整二进制复制。它包含了存储设备的所有内容，包括文件系统、文件、目录和元数据。镜像文件通常用于备份、恢复或在不同的设备或系统之间复制数据。在嵌入式系统开发中，镜像文件通常包含了完整的固件，包括引导加载程序、内核、应用程序和文件系统。
 
 
+
+Deployment
+--------------
+
+我们以 Ariane APU 为例，使用 Vivado 进行 FPGA 的部署。
+
+.. attention::
+
+   使用 GUI 界面虽然简单，但是效率很低，而且 Vivado 的 GUI 做得很差。
+   我们推荐你使用 TCL（Tooling Command Language）操作 Vivado。
+
+Source Files
+^^^^^^^^^^^
+
+将整个项目文件夹丢给 Vivado，让其自动寻找源文件是一种可取的方案。
+
+CVA6 项目中，在 ``<cva6>`` 目录下运行 ``make fpga``，即可生成获取所有源文件的 TCL 脚本。
+该文件为 ``<cva6>/corev_apu/fpga/src/scripts/add_sources.tcl``。
+
+
+Bitstream
+^^^^^^^^^^^^
+
+IP
+##########
+
+Vivado 中提供了许多外设和总线的 IP（Intellectual Property），因此我们首先需要生成这些 IP。
+
+.. note::
+
+   你也可以不使用这些 IP，而使用自行编写的 RTL，但这并不常见。
+
+
+
+
+
+FPGA Synthesis
+^^^^^^^^^^^^
+
+
+
+
+
+1. Generate sources > add source.tcl
+2. generate bitstream
+   2.1 generating xxx.xci (ips)
+   2.2 source prologue.tcl
+      2.2.1 create project <ariane>
+   2.3 source run.tcl
+      2.3.1 add constraint file
+      2.3.2 read ips
+      2.3.3 include dirs
+      2.3.4 add source.tcl, top_module=ariane_xilinx
+      2.3.5 top_module peripheral ports (set register use the same source)
 
 
 
