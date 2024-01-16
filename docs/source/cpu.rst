@@ -202,6 +202,10 @@ argv[0] 是程序的名称，argv[1] 是第一个命令行参数，以此类推�
 
 	如果你的程序使用了 C 库中的 exit 函数，但你没有提供一个适合你的目标环境的 exit 函数实现，那么在链接阶段，链接器会报错，因为它找不到 exit 函数的定义。
 
+.. Tip::
+
+	你可以查询 `RISC-V Assembly Programmer's Manual <https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md>`__ 来了解如何编写 RISC-V 汇编语言。
+
 
 Verification
 ------------------
