@@ -198,7 +198,20 @@ _hang 代码段通常只在出现错误或特殊情况时才会执行。
 C-compatiable Version
 ####################
 
-兼容 C 代码编译出来的二进制文件所需要的 bootloader 更为复杂。
+如果我们想在 bare-metal 的 RISC-V CPU 下兼容 C 代码编译出来的二进制文件，那么所需要的 bootloader 更为复杂。
+
+
+
+
+
+
+`RISC-V Assembly Programmer's Manual <https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md>`__
+
+The GNU linker https://ftp.gnu.org/old-gnu/Manuals/ld-2.9.1/html_node/ld_toc.html
+
+.. Tip::
+
+   你可以参考 `这篇教程 <https://twilco.github.io/riscv-from-scratch/2019/04/27/riscv-from-scratch-2.html>`__ ，自己动手在 RISC-V CPU 上运行 C 代码。
 
 
 
