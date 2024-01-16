@@ -652,6 +652,58 @@ Vivado 中提供了许多外设和总线的 IP（Intellectual Property），因�
 
    你也可以不使用这些 IP，而使用自行编写的 RTL，但这并不常见。
 
+我们给出 CVA6 中是如何生成这些 IP 的。
+
+
+1. 设置一些环境变量。
+
+.. code-block::
+
+   set partNumber $::env(XILINX_PART)
+   set boardName  $::env(XILINX_BOARD)
+   
+   set ipName xlnx_axi_clock_converter
+
+获取 FPGA 芯片的型号、板卡的名称和 IP 核心的名称。
+
+2. 建一个新的项目。
+
+.. code-block::
+   
+   create_project $ipName . -force -part $partNumber
+   set_property board_part $boardName [current_project]
+   create_ip -name axi_clock_converter -vendor xilinx.com -library ip -module_name $ipName
+   set_property -dict [list CONFIG.ADDR_WIDTH {64} CONFIG.DATA_WIDTH {64} CONFIG.ID_WIDTH {5}] [get_ips $ipName]
+
+项目的名称为 IP 核心的名称，项目的位置为当前目录，如果项目已经存在则强制覆盖，项目的 FPGA 芯片型号为前面从环境变量中获取的型号。
+设置当前项目的板卡名称为前面从环境变量中获取的名称。
+
+创建一个新的 IP 核心，核心的名称为 axi_clock_converter，供应商为 xilinx.com，库为 ip，模块的名称为前面设置的 IP 核心的名称。
+
+设置 IP 核心的地址宽度为 64 位，数据宽度为 64 位，ID 宽度为 5 位。
+
+3. IP 综合。
+
+.. code-block::
+
+   generate_target {instantiation_template} [get_files ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
+   generate_target all [get_files  ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
+   create_ip_run [get_files -of_objects [get_fileset sources_1] ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
+   launch_run -jobs 8 ${ipName}_synth_1
+   wait_on_run ${ipName}_synth_1
+
+首先生成 IP 核心的实例化模板。
+实例化模板是一个包含了如何实例化 IP 核心的代码的文件。
+然后，生成所有目标。
+在这里，所有目标可能包括了实例化模板、综合结果、实现结果等。
+
+创建一个 IP 核心的运行。
+在这里，运行是一个包含了如何综合和实现 IP 核心的流程的对象。
+启动 IP 核心的综合。在这里，``-jobs 8`` 参数表示使用 8 个并行任务来执行综合。
+最后等待综合完成，确保在继续执行后续的脚本之前，综合已经成功完成。
+
+4. 重复步骤 1 ~ 3，直到所有的 IP 都已经生成。
+
 
 
 
