@@ -630,6 +630,7 @@ Deployment
 
    使用 GUI 界面虽然简单，但是效率很低，而且 Vivado 的 GUI 做得很差。
    我们推荐你使用 TCL（Tooling Command Language）操作 Vivado。
+   请自行查看 CVA6 项目中完整的 Vivado 流程，我们只会解释部分重要的 TCL 片段。
 
 Source Files
 ^^^^^^^^^^^
@@ -640,11 +641,8 @@ CVA6 项目中，在 ``<cva6>`` 目录下运行 ``make fpga``，即可生成获�
 该文件为 ``<cva6>/corev_apu/fpga/src/scripts/add_sources.tcl``。
 
 
-Bitstream
-^^^^^^^^^^^^
-
 IP
-##########
+^^^^^^^^^^^
 
 Vivado 中提供了许多外设和总线的 IP（Intellectual Property），因此我们首先需要生成这些 IP。
 
@@ -653,7 +651,6 @@ Vivado 中提供了许多外设和总线的 IP（Intellectual Property），因�
    你也可以不使用这些 IP，而使用自行编写的 RTL，但这并不常见。
 
 我们给出 CVA6 中是如何生成这些 IP 的。
-
 
 1. 设置一些环境变量。
 
@@ -704,28 +701,118 @@ Vivado 中提供了许多外设和总线的 IP（Intellectual Property），因�
 
 4. 重复步骤 1 ~ 3，直到所有的 IP 都已经生成。
 
+Design Constraint
+^^^^^^^^^^^^^^
+
+1. FPGA 设计项目的创建和一些参数的设置。
+
+.. code-block::
+
+   set project ariane
+   create_project $project . -force -part $::env(XILINX_PART)
+   set_property board_part $::env(XILINX_BOARD) [current_project]
+   # set number of threads to 8 (maximum, unfortunately)
+   set_param general.maxThreads 8
+   set_msg_config -id {[Synth 8-5858]} -new_severity "info"
+   set_msg_config -id {[Synth 8-4480]} -limit 1000
+
+设置变量 project，其值为 ariane。
+这个变量将被用作项目的名称。
+
+创建一个新的项目，项目的名称为 project 变量的值，即 ariane。
+项目的位置是当前目录（.）。
+-force 选项表示如果项目已经存在，则覆盖它。
+-part $::env(XILINX_PART) 选项表示项目的 FPGA 芯片型号为环境变量 XILINX_PART 的值。
+
+设置了当前项目的板卡型号为环境变量 XILINX_BOARD 的值、Vivado 的最大线程数为 8。
+改变消息 Synth 8-5858 的严重性级别为 "info"，Synth 8-4480 的最大显示次数为 1000。
+
+2. IP 的读取、包含目录的设置以及顶层设计的设置。
+
+``read_ip {...}``：读取了一系列 IP。
+这些 IP 核的文件路径被包含在大括号 {} 中，每个路径都被双引号 "" 包围。
+这些 IP 包括 DDR3 内存接口、AXI 时钟转换器、AXI 数据宽度转换器、AXI GPIO、AXI Quad SPI 和时钟生成器等。
+
+``set_property include_dirs {...} [current_fileset]``：这个命令设置了当前文件集的包含目录。
+这些目录包含了设计所需的头文件。
+这些目录的路径被包含在大括号 {} 中，每个路径都被双引号 "" 包围。
+
+``source scripts/add_sources.tcl``：这个命令执行了一个 Tcl 脚本 add_sources.tcl。
+这个脚本可能包含了一些添加源文件的命令。
+
+``set_property top ${project}_xilinx [current_fileset]``：这个命令设置了当前文件集的顶层设计。
+顶层设计的名称为 ${project}_xilinx，其中 ${project} 是一个变量，其值应该在之前的代码中被设置。
+
+3. 向设计项目中添加约束文件。
+
+``add_files -fileset constrs_1 -norecurse constraints/$project.xdc``：这个命令向名为 constrs_1 的文件集中添加了一个约束文件。
+约束文件的路径为 constraints/$project.xdc，其中 $project 是一个变量，其值应该在之前的代码中被设置。
+-norecurse 选项表示不递归地添加目录中的文件，也就是说，只添加指定的文件，不添加该文件所在目录下的其他文件。
 
 
-
-
-FPGA Synthesis
+Bitstream
 ^^^^^^^^^^^^
 
+.. code-block::
+
+   add_files -fileset constrs_1 -norecurse constraints/$project.xdc
+   synth_design -rtl -name rtl_1
+   set_property STEPS.SYNTH_DESIGN.ARGS.RETIMING true [get_runs synth_1]
+   launch_runs synth_1
+   wait_on_run synth_1
+   open_run synth_1
 
 
+启动名为 rtl_1 的 RTL 级别的综合。
+设置 synth_1 综合步骤的参数，使得综合过程中进行重时序操作。重时序可以优化设计的时序性能。
+最终启动名为 synth_1 的综合流程，并打开 synth_1 的综合流程的结果。
+这个结果包括了综合报告、网表文件等。
 
+.. code-block::
 
-1. Generate sources > add source.tcl
-2. generate bitstream
-   2.1 generating xxx.xci (ips)
-   2.2 source prologue.tcl
-      2.2.1 create project <ariane>
-   2.3 source run.tcl
-      2.3.1 add constraint file
-      2.3.2 read ips
-      2.3.3 include dirs
-      2.3.4 add source.tcl, top_module=ariane_xilinx
-      2.3.5 top_module peripheral ports (set register use the same source)
+   # set for RuntimeOptimized implementation
+   set_property "steps.place_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
+   set_property "steps.route_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
+
+设置名为 impl_1 的实现流程中布局布线设计步骤的指令为 "RuntimeOptimized"。
+"RuntimeOptimized" 指令会优化设计的运行时间。
+
+.. code-block::
+
+   launch_runs impl_1
+   wait_on_run impl_1
+   launch_runs impl_1 -to_step write_bitstream
+   wait_on_run impl_1
+   open_run impl_1
+
+启动名为 `impl_1` 的实现流程，但只执行到 "write_bitstream" 步骤。
+"write_bitstream" 步骤是实现流程的最后一个步骤，它生成了一个比特流文件，这个文件可以被下载到 FPGA 芯片上。
+打开名为 `impl_1` 的实现流程的结果。
+这个命令可以让用户查看实现流程的结果，包括布局布线的结果和比特流文件。
+
+Report
+^^^^^^^^^^^^^^^^
+
+.. code-block::
+
+   check_timing -verbose                                                   -file reports/$project.check_timing.rpt
+   report_timing -max_paths 100 -nworst 100 -delay_type max -sort_by slack -file reports/$project.timing_WORST_100.rpt
+   report_timing -nworst 1 -delay_type max -sort_by group                  -file reports/$project.timing.rpt
+   report_utilization -hierarchical                                        -file reports/$project.utilization.rpt
+   report_cdc                                                              -file reports/$project.cdc.rpt
+   report_clock_interaction                                                -file reports/$project.clock_interaction.rpt
+
+生成 FPGA 设计的各种报告，包括时序报告、资源利用率报告、CDC 报告和时钟交互报告。
+
+.. code-block::
+
+   # output Verilog netlist + SDC for timing simulation
+   write_verilog -force -mode funcsim work-fpga/${project}_funcsim.v
+   write_verilog -force -mode timesim work-fpga/${project}_timesim.v
+   write_sdf     -force work-fpga/${project}_timesim.sdf
+
+生成 Verilog 网表和 SDF 文件，用于功能仿真和时序仿真。
+这是 FPGA 设计流程的一部分，通过这个步骤，可以对设计进行仿真，验证设计的功能和时序。
 
 
 
