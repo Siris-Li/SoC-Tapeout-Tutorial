@@ -632,7 +632,11 @@ Deployment
    我们推荐你使用 TCL（Tooling Command Language）操作 Vivado。
    请自行查看 CVA6 项目中完整的 Vivado 流程，我们只会解释部分重要的 TCL 片段。
 
-在 <cva6> 路径下
+在 <cva6> 路径下运行 ``make fpga``，该脚本会搜索所有的 RTL 源文件并将其添加到 ``<cva6>/corev_apu/fpga/scripts/add_sources.tcl``。
+
+接着会在 ``<cva6>/corev_apu/fpga`` 中运行对应的 Makefile。
+这个脚本首先会遍历 ``<cva6>/corev_apu/fpga/xilinx`` 目录中所有的 IP 文件夹，生成 IP 并综合。
+然后运行 ``<cva6>/corev_apu/fpga/scripts`` 目录中的 ``prologue.tcl`` 和 ``run.tcl`` 综合源文件，最后布局布线生成 bitstream。
 
 Source Files
 ^^^^^^^^^^^
@@ -641,7 +645,6 @@ Source Files
 
 CVA6 项目中，在 ``<cva6>`` 目录下运行 ``make fpga``，即可生成获取所有源文件的 TCL 脚本。
 该文件为 ``<cva6>/corev_apu/fpga/src/scripts/add_sources.tcl``。
-
 
 IP
 ^^^^^^^^^^^
