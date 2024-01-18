@@ -632,6 +632,8 @@ Deployment
    我们推荐你使用 TCL（Tooling Command Language）操作 Vivado。
    请自行查看 CVA6 项目中完整的 Vivado 流程，我们只会解释部分重要的 TCL 片段。
 
+在 <cva6> 路径下
+
 Source Files
 ^^^^^^^^^^^
 
@@ -814,7 +816,15 @@ Report
 生成 Verilog 网表和 SDF 文件，用于功能仿真和时序仿真。
 这是 FPGA 设计流程的一部分，通过这个步骤，可以对设计进行仿真，验证设计的功能和时序。
 
+Adjustment
+^^^^^^^^^^^^^^^^^^^
 
+``<cva6>/Makedile``：``XILINX_PART`` ``XILINX_BOARD`` 修改。
+
+``<cva6>/corev_apu/fpga/Makefile``：注释掉 ips 中的 xlnx_mig_7_ddr3.xci。
+
+``<cva6>/corev_apu/fpga/scripts/run.tcl``：注释掉 read_ip 中的 xlnx_mig_7_ddr3.xci。
+可以选择在 ``launch_runs`` 后添加选项 ``-jobs <cpu_core_nums>``。
 
 .. note::
 
