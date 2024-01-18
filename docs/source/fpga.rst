@@ -819,7 +819,7 @@ Report
 Adjustment
 ^^^^^^^^^^^^^^^^^^^
 
-``<cva6>/Makedile``：``XILINX_PART`` ``XILINX_BOARD`` 修改。
+``<cva6>/Makefile``：``XILINX_PART`` ``XILINX_BOARD`` 修改。
 
 ``<cva6>/corev_apu/fpga/Makefile``：注释掉 ips 中的 xlnx_mig_7_ddr3.xci。
 
