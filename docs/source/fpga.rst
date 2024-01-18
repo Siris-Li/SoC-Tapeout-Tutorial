@@ -754,6 +754,10 @@ Design Constraint
 约束文件的路径为 constraints/$project.xdc，其中 $project 是一个变量，其值应该在之前的代码中被设置。
 -norecurse 选项表示不递归地添加目录中的文件，也就是说，只添加指定的文件，不添加该文件所在目录下的其他文件。
 
+.. attention::
+
+   在约束文件中加入 ``set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets tck_IBUF]``，否则 Vivado 会报错。
+
 
 Bitstream
 ^^^^^^^^^^^^
