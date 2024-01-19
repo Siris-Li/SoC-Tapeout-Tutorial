@@ -3,6 +3,231 @@ FPGA Implementation
 
 .. contents:: Table of Contents
 
+Deployment
+--------------
+
+我们以 Ariane APU 为例，使用 Vivado 进行 FPGA 的部署。
+
+.. attention::
+
+   使用 GUI 界面虽然简单，但是效率很低，而且 Vivado 的 GUI 做得很差。
+   我们推荐你使用 TCL（Tooling Command Language）操作 Vivado。
+   请自行查看 CVA6 项目中完整的 Vivado 流程，我们只会解释部分重要的 TCL 片段。
+
+在 <cva6> 路径下运行 ``make fpga``，该脚本会搜索所有的 RTL 源文件并将其添加到 ``<cva6>/corev_apu/fpga/scripts/add_sources.tcl``。
+
+接着会在 ``<cva6>/corev_apu/fpga`` 中运行对应的 Makefile。
+这个脚本首先会遍历 ``<cva6>/corev_apu/fpga/xilinx`` 目录中所有的 IP 文件夹，生成 IP 并综合。
+然后运行 ``<cva6>/corev_apu/fpga/scripts`` 目录中的 ``prologue.tcl`` 和 ``run.tcl`` 综合源文件，最后布局布线生成 bitstream。
+
+Source Files
+^^^^^^^^^^^
+
+将整个项目文件夹丢给 Vivado，让其自动寻找源文件是一种可取的方案。
+
+CVA6 项目中，在 ``<cva6>`` 目录下运行 ``make fpga``，即可生成获取所有源文件的 TCL 脚本。
+该文件为 ``<cva6>/corev_apu/fpga/src/scripts/add_sources.tcl``。
+
+IP
+^^^^^^^^^^^
+
+Vivado 中提供了许多外设和总线的 IP（Intellectual Property），因此我们首先需要生成这些 IP。
+
+.. note::
+
+   你也可以不使用这些 IP，而使用自行编写的 RTL，但这并不常见。
+
+我们给出 CVA6 中是如何生成这些 IP 的。
+
+1. 设置一些环境变量。
+
+.. code-block::
+
+   set partNumber $::env(XILINX_PART)
+   set boardName  $::env(XILINX_BOARD)
+   
+   set ipName xlnx_axi_clock_converter
+
+获取 FPGA 芯片的型号、板卡的名称和 IP 核心的名称。
+
+2. 建一个新的项目。
+
+.. code-block::
+   
+   create_project $ipName . -force -part $partNumber
+   set_property board_part $boardName [current_project]
+   create_ip -name axi_clock_converter -vendor xilinx.com -library ip -module_name $ipName
+   set_property -dict [list CONFIG.ADDR_WIDTH {64} CONFIG.DATA_WIDTH {64} CONFIG.ID_WIDTH {5}] [get_ips $ipName]
+
+项目的名称为 IP 核心的名称，项目的位置为当前目录，如果项目已经存在则强制覆盖，项目的 FPGA 芯片型号为前面从环境变量中获取的型号。
+设置当前项目的板卡名称为前面从环境变量中获取的名称。
+
+创建一个新的 IP 核心，核心的名称为 axi_clock_converter，供应商为 xilinx.com，库为 ip，模块的名称为前面设置的 IP 核心的名称。
+
+设置 IP 核心的地址宽度为 64 位，数据宽度为 64 位，ID 宽度为 5 位。
+
+3. IP 综合。
+
+.. code-block::
+
+   generate_target {instantiation_template} [get_files ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
+   generate_target all [get_files  ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
+   create_ip_run [get_files -of_objects [get_fileset sources_1] ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
+   launch_run -jobs 8 ${ipName}_synth_1
+   wait_on_run ${ipName}_synth_1
+
+首先生成 IP 核心的实例化模板。
+实例化模板是一个包含了如何实例化 IP 核心的代码的文件。
+然后，生成所有目标。
+在这里，所有目标可能包括了实例化模板、综合结果、实现结果等。
+
+创建一个 IP 核心的运行。
+在这里，运行是一个包含了如何综合和实现 IP 核心的流程的对象。
+启动 IP 核心的综合。在这里，``-jobs 8`` 参数表示使用 8 个并行任务来执行综合。
+最后等待综合完成，确保在继续执行后续的脚本之前，综合已经成功完成。
+
+4. 重复步骤 1 ~ 3，直到所有的 IP 都已经生成。
+
+Design Constraint
+^^^^^^^^^^^^^^
+
+1. FPGA 设计项目的创建和一些参数的设置。
+
+.. code-block::
+
+   set project ariane
+   create_project $project . -force -part $::env(XILINX_PART)
+   set_property board_part $::env(XILINX_BOARD) [current_project]
+   # set number of threads to 8 (maximum, unfortunately)
+   set_param general.maxThreads 8
+   set_msg_config -id {[Synth 8-5858]} -new_severity "info"
+   set_msg_config -id {[Synth 8-4480]} -limit 1000
+
+设置变量 project，其值为 ariane。
+这个变量将被用作项目的名称。
+
+创建一个新的项目，项目的名称为 project 变量的值，即 ariane。
+项目的位置是当前目录（.）。
+-force 选项表示如果项目已经存在，则覆盖它。
+-part $::env(XILINX_PART) 选项表示项目的 FPGA 芯片型号为环境变量 XILINX_PART 的值。
+
+设置了当前项目的板卡型号为环境变量 XILINX_BOARD 的值、Vivado 的最大线程数为 8。
+改变消息 Synth 8-5858 的严重性级别为 "info"，Synth 8-4480 的最大显示次数为 1000。
+
+2. IP 的读取、包含目录的设置以及顶层设计的设置。
+
+``read_ip {...}``：读取了一系列 IP。
+这些 IP 核的文件路径被包含在大括号 {} 中，每个路径都被双引号 "" 包围。
+这些 IP 包括 DDR3 内存接口、AXI 时钟转换器、AXI 数据宽度转换器、AXI GPIO、AXI Quad SPI 和时钟生成器等。
+
+``set_property include_dirs {...} [current_fileset]``：这个命令设置了当前文件集的包含目录。
+这些目录包含了设计所需的头文件。
+这些目录的路径被包含在大括号 {} 中，每个路径都被双引号 "" 包围。
+
+``source scripts/add_sources.tcl``：这个命令执行了一个 Tcl 脚本 add_sources.tcl。
+这个脚本可能包含了一些添加源文件的命令。
+
+``set_property top ${project}_xilinx [current_fileset]``：这个命令设置了当前文件集的顶层设计。
+顶层设计的名称为 ${project}_xilinx，其中 ${project} 是一个变量，其值应该在之前的代码中被设置。
+
+3. 向设计项目中添加约束文件。
+
+``add_files -fileset constrs_1 -norecurse constraints/$project.xdc``：这个命令向名为 constrs_1 的文件集中添加了一个约束文件。
+约束文件的路径为 constraints/$project.xdc，其中 $project 是一个变量，其值应该在之前的代码中被设置。
+-norecurse 选项表示不递归地添加目录中的文件，也就是说，只添加指定的文件，不添加该文件所在目录下的其他文件。
+
+.. attention::
+
+   在约束文件中加入 ``set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets tck_IBUF]``，否则 Vivado 会报错。
+
+
+Bitstream
+^^^^^^^^^^^^
+
+.. code-block::
+
+   add_files -fileset constrs_1 -norecurse constraints/$project.xdc
+   synth_design -rtl -name rtl_1
+   set_property STEPS.SYNTH_DESIGN.ARGS.RETIMING true [get_runs synth_1]
+   launch_runs synth_1
+   wait_on_run synth_1
+   open_run synth_1
+
+
+启动名为 rtl_1 的 RTL 级别的综合。
+设置 synth_1 综合步骤的参数，使得综合过程中进行重时序操作。重时序可以优化设计的时序性能。
+最终启动名为 synth_1 的综合流程，并打开 synth_1 的综合流程的结果。
+这个结果包括了综合报告、网表文件等。
+
+.. code-block::
+
+   # set for RuntimeOptimized implementation
+   set_property "steps.place_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
+   set_property "steps.route_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
+
+设置名为 impl_1 的实现流程中布局布线设计步骤的指令为 "RuntimeOptimized"。
+"RuntimeOptimized" 指令会优化设计的运行时间。
+
+.. code-block::
+
+   launch_runs impl_1
+   wait_on_run impl_1
+   launch_runs impl_1 -to_step write_bitstream
+   wait_on_run impl_1
+   open_run impl_1
+
+启动名为 `impl_1` 的实现流程，但只执行到 "write_bitstream" 步骤。
+"write_bitstream" 步骤是实现流程的最后一个步骤，它生成了一个比特流文件，这个文件可以被下载到 FPGA 芯片上。
+打开名为 `impl_1` 的实现流程的结果。
+这个命令可以让用户查看实现流程的结果，包括布局布线的结果和比特流文件（.bit）。
+
+.. Tip::
+
+   .bit 文件是一个二进制文件，用于直接配置FPGA的硬件。
+   当你设计并综合一个FPGA项目时，最终会生成一个.bit文件。
+   这个文件包含了用于配置FPGA的所有必要信息，如查找表（LUTs）、寄存器等的配置数据。
+   通常，这个文件是通过JTAG或其他直接编程接口传输到FPGA的。
+   一旦FPGA断电，这个配置就会丢失。
+
+.. hint::
+
+   如果你想要 FPGA 每次启动时都能自动加载所需的配置，那你需要将 .bit 文件转换成 .mcs 文件（Memory Configuration Stream）。
+   这是一个用于非易失性存储器编程的文件，比如用于配置PROM（Programmable Read-Only Memory）或者闪存。
+
+Report
+^^^^^^^^^^^^^^^^
+
+.. code-block::
+
+   check_timing -verbose                                                   -file reports/$project.check_timing.rpt
+   report_timing -max_paths 100 -nworst 100 -delay_type max -sort_by slack -file reports/$project.timing_WORST_100.rpt
+   report_timing -nworst 1 -delay_type max -sort_by group                  -file reports/$project.timing.rpt
+   report_utilization -hierarchical                                        -file reports/$project.utilization.rpt
+   report_cdc                                                              -file reports/$project.cdc.rpt
+   report_clock_interaction                                                -file reports/$project.clock_interaction.rpt
+
+生成 FPGA 设计的各种报告，包括时序报告、资源利用率报告、CDC 报告和时钟交互报告。
+
+.. code-block::
+
+   # output Verilog netlist + SDC for timing simulation
+   write_verilog -force -mode funcsim work-fpga/${project}_funcsim.v
+   write_verilog -force -mode timesim work-fpga/${project}_timesim.v
+   write_sdf     -force work-fpga/${project}_timesim.sdf
+
+生成 Verilog 网表和 SDF 文件，用于功能仿真和时序仿真。
+这是 FPGA 设计流程的一部分，通过这个步骤，可以对设计进行仿真，验证设计的功能和时序。
+
+Adjustment
+^^^^^^^^^^^^^^^^^^^
+
+``<cva6>/Makefile``：``XILINX_PART`` ``XILINX_BOARD`` 修改。
+
+``<cva6>/corev_apu/fpga/Makefile``：注释掉 ips 中的 xlnx_mig_7_ddr3.xci。
+
+``<cva6>/corev_apu/fpga/scripts/run.tcl``：注释掉 read_ip 中的 xlnx_mig_7_ddr3.xci。
+可以选择在 ``launch_runs`` 后添加选项 ``-jobs <cpu_core_nums>``。
+
 Boot
 ----------------
 
@@ -606,232 +831,24 @@ Linker Script
 
 请参考 CVA6 的 `实现方式 <https://github.com/openhwgroup/cva6/tree/master/verif/bsp>`__ 。
 
-
-
-
-
-
-
-
-
-
-
    
 镜像文件（.img）通常是一个存储设备或文件系统的完整二进制复制。它包含了存储设备的所有内容，包括文件系统、文件、目录和元数据。镜像文件通常用于备份、恢复或在不同的设备或系统之间复制数据。在嵌入式系统开发中，镜像文件通常包含了完整的固件，包括引导加载程序、内核、应用程序和文件系统。
 
 
+Debug
+----------------
 
-Deployment
---------------
-
-我们以 Ariane APU 为例，使用 Vivado 进行 FPGA 的部署。
-
-.. attention::
-
-   使用 GUI 界面虽然简单，但是效率很低，而且 Vivado 的 GUI 做得很差。
-   我们推荐你使用 TCL（Tooling Command Language）操作 Vivado。
-   请自行查看 CVA6 项目中完整的 Vivado 流程，我们只会解释部分重要的 TCL 片段。
-
-在 <cva6> 路径下运行 ``make fpga``，该脚本会搜索所有的 RTL 源文件并将其添加到 ``<cva6>/corev_apu/fpga/scripts/add_sources.tcl``。
-
-接着会在 ``<cva6>/corev_apu/fpga`` 中运行对应的 Makefile。
-这个脚本首先会遍历 ``<cva6>/corev_apu/fpga/xilinx`` 目录中所有的 IP 文件夹，生成 IP 并综合。
-然后运行 ``<cva6>/corev_apu/fpga/scripts`` 目录中的 ``prologue.tcl`` 和 ``run.tcl`` 综合源文件，最后布局布线生成 bitstream。
-
-Source Files
-^^^^^^^^^^^
-
-将整个项目文件夹丢给 Vivado，让其自动寻找源文件是一种可取的方案。
-
-CVA6 项目中，在 ``<cva6>`` 目录下运行 ``make fpga``，即可生成获取所有源文件的 TCL 脚本。
-该文件为 ``<cva6>/corev_apu/fpga/src/scripts/add_sources.tcl``。
-
-IP
-^^^^^^^^^^^
-
-Vivado 中提供了许多外设和总线的 IP（Intellectual Property），因此我们首先需要生成这些 IP。
-
-.. note::
-
-   你也可以不使用这些 IP，而使用自行编写的 RTL，但这并不常见。
-
-我们给出 CVA6 中是如何生成这些 IP 的。
-
-1. 设置一些环境变量。
-
-.. code-block::
-
-   set partNumber $::env(XILINX_PART)
-   set boardName  $::env(XILINX_BOARD)
-   
-   set ipName xlnx_axi_clock_converter
-
-获取 FPGA 芯片的型号、板卡的名称和 IP 核心的名称。
-
-2. 建一个新的项目。
-
-.. code-block::
-   
-   create_project $ipName . -force -part $partNumber
-   set_property board_part $boardName [current_project]
-   create_ip -name axi_clock_converter -vendor xilinx.com -library ip -module_name $ipName
-   set_property -dict [list CONFIG.ADDR_WIDTH {64} CONFIG.DATA_WIDTH {64} CONFIG.ID_WIDTH {5}] [get_ips $ipName]
-
-项目的名称为 IP 核心的名称，项目的位置为当前目录，如果项目已经存在则强制覆盖，项目的 FPGA 芯片型号为前面从环境变量中获取的型号。
-设置当前项目的板卡名称为前面从环境变量中获取的名称。
-
-创建一个新的 IP 核心，核心的名称为 axi_clock_converter，供应商为 xilinx.com，库为 ip，模块的名称为前面设置的 IP 核心的名称。
-
-设置 IP 核心的地址宽度为 64 位，数据宽度为 64 位，ID 宽度为 5 位。
-
-3. IP 综合。
-
-.. code-block::
-
-   generate_target {instantiation_template} [get_files ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
-   generate_target all [get_files  ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
-   create_ip_run [get_files -of_objects [get_fileset sources_1] ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
-   launch_run -jobs 8 ${ipName}_synth_1
-   wait_on_run ${ipName}_synth_1
-
-首先生成 IP 核心的实例化模板。
-实例化模板是一个包含了如何实例化 IP 核心的代码的文件。
-然后，生成所有目标。
-在这里，所有目标可能包括了实例化模板、综合结果、实现结果等。
-
-创建一个 IP 核心的运行。
-在这里，运行是一个包含了如何综合和实现 IP 核心的流程的对象。
-启动 IP 核心的综合。在这里，``-jobs 8`` 参数表示使用 8 个并行任务来执行综合。
-最后等待综合完成，确保在继续执行后续的脚本之前，综合已经成功完成。
-
-4. 重复步骤 1 ~ 3，直到所有的 IP 都已经生成。
-
-Design Constraint
-^^^^^^^^^^^^^^
-
-1. FPGA 设计项目的创建和一些参数的设置。
-
-.. code-block::
-
-   set project ariane
-   create_project $project . -force -part $::env(XILINX_PART)
-   set_property board_part $::env(XILINX_BOARD) [current_project]
-   # set number of threads to 8 (maximum, unfortunately)
-   set_param general.maxThreads 8
-   set_msg_config -id {[Synth 8-5858]} -new_severity "info"
-   set_msg_config -id {[Synth 8-4480]} -limit 1000
-
-设置变量 project，其值为 ariane。
-这个变量将被用作项目的名称。
-
-创建一个新的项目，项目的名称为 project 变量的值，即 ariane。
-项目的位置是当前目录（.）。
--force 选项表示如果项目已经存在，则覆盖它。
--part $::env(XILINX_PART) 选项表示项目的 FPGA 芯片型号为环境变量 XILINX_PART 的值。
-
-设置了当前项目的板卡型号为环境变量 XILINX_BOARD 的值、Vivado 的最大线程数为 8。
-改变消息 Synth 8-5858 的严重性级别为 "info"，Synth 8-4480 的最大显示次数为 1000。
-
-2. IP 的读取、包含目录的设置以及顶层设计的设置。
-
-``read_ip {...}``：读取了一系列 IP。
-这些 IP 核的文件路径被包含在大括号 {} 中，每个路径都被双引号 "" 包围。
-这些 IP 包括 DDR3 内存接口、AXI 时钟转换器、AXI 数据宽度转换器、AXI GPIO、AXI Quad SPI 和时钟生成器等。
-
-``set_property include_dirs {...} [current_fileset]``：这个命令设置了当前文件集的包含目录。
-这些目录包含了设计所需的头文件。
-这些目录的路径被包含在大括号 {} 中，每个路径都被双引号 "" 包围。
-
-``source scripts/add_sources.tcl``：这个命令执行了一个 Tcl 脚本 add_sources.tcl。
-这个脚本可能包含了一些添加源文件的命令。
-
-``set_property top ${project}_xilinx [current_fileset]``：这个命令设置了当前文件集的顶层设计。
-顶层设计的名称为 ${project}_xilinx，其中 ${project} 是一个变量，其值应该在之前的代码中被设置。
-
-3. 向设计项目中添加约束文件。
-
-``add_files -fileset constrs_1 -norecurse constraints/$project.xdc``：这个命令向名为 constrs_1 的文件集中添加了一个约束文件。
-约束文件的路径为 constraints/$project.xdc，其中 $project 是一个变量，其值应该在之前的代码中被设置。
--norecurse 选项表示不递归地添加目录中的文件，也就是说，只添加指定的文件，不添加该文件所在目录下的其他文件。
-
-.. attention::
-
-   在约束文件中加入 ``set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets tck_IBUF]``，否则 Vivado 会报错。
-
-
-Bitstream
+Tools
 ^^^^^^^^^^^^
 
-.. code-block::
-
-   add_files -fileset constrs_1 -norecurse constraints/$project.xdc
-   synth_design -rtl -name rtl_1
-   set_property STEPS.SYNTH_DESIGN.ARGS.RETIMING true [get_runs synth_1]
-   launch_runs synth_1
-   wait_on_run synth_1
-   open_run synth_1
 
 
-启动名为 rtl_1 的 RTL 级别的综合。
-设置 synth_1 综合步骤的参数，使得综合过程中进行重时序操作。重时序可以优化设计的时序性能。
-最终启动名为 synth_1 的综合流程，并打开 synth_1 的综合流程的结果。
-这个结果包括了综合报告、网表文件等。
 
-.. code-block::
 
-   # set for RuntimeOptimized implementation
-   set_property "steps.place_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
-   set_property "steps.route_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
+Flow
+^^^^^^^^^^^^
 
-设置名为 impl_1 的实现流程中布局布线设计步骤的指令为 "RuntimeOptimized"。
-"RuntimeOptimized" 指令会优化设计的运行时间。
 
-.. code-block::
-
-   launch_runs impl_1
-   wait_on_run impl_1
-   launch_runs impl_1 -to_step write_bitstream
-   wait_on_run impl_1
-   open_run impl_1
-
-启动名为 `impl_1` 的实现流程，但只执行到 "write_bitstream" 步骤。
-"write_bitstream" 步骤是实现流程的最后一个步骤，它生成了一个比特流文件，这个文件可以被下载到 FPGA 芯片上。
-打开名为 `impl_1` 的实现流程的结果。
-这个命令可以让用户查看实现流程的结果，包括布局布线的结果和比特流文件。
-
-Report
-^^^^^^^^^^^^^^^^
-
-.. code-block::
-
-   check_timing -verbose                                                   -file reports/$project.check_timing.rpt
-   report_timing -max_paths 100 -nworst 100 -delay_type max -sort_by slack -file reports/$project.timing_WORST_100.rpt
-   report_timing -nworst 1 -delay_type max -sort_by group                  -file reports/$project.timing.rpt
-   report_utilization -hierarchical                                        -file reports/$project.utilization.rpt
-   report_cdc                                                              -file reports/$project.cdc.rpt
-   report_clock_interaction                                                -file reports/$project.clock_interaction.rpt
-
-生成 FPGA 设计的各种报告，包括时序报告、资源利用率报告、CDC 报告和时钟交互报告。
-
-.. code-block::
-
-   # output Verilog netlist + SDC for timing simulation
-   write_verilog -force -mode funcsim work-fpga/${project}_funcsim.v
-   write_verilog -force -mode timesim work-fpga/${project}_timesim.v
-   write_sdf     -force work-fpga/${project}_timesim.sdf
-
-生成 Verilog 网表和 SDF 文件，用于功能仿真和时序仿真。
-这是 FPGA 设计流程的一部分，通过这个步骤，可以对设计进行仿真，验证设计的功能和时序。
-
-Adjustment
-^^^^^^^^^^^^^^^^^^^
-
-``<cva6>/Makefile``：``XILINX_PART`` ``XILINX_BOARD`` 修改。
-
-``<cva6>/corev_apu/fpga/Makefile``：注释掉 ips 中的 xlnx_mig_7_ddr3.xci。
-
-``<cva6>/corev_apu/fpga/scripts/run.tcl``：注释掉 read_ip 中的 xlnx_mig_7_ddr3.xci。
-可以选择在 ``launch_runs`` 后添加选项 ``-jobs <cpu_core_nums>``。
 
 .. note::
 
