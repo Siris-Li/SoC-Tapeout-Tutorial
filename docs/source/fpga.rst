@@ -345,13 +345,10 @@ Naive Version
    当一个程序被加载到内存中执行时，它的代码、数据和其他资源会被放置在内存的特定位置。这些代码、数据和资源在内存中的布局就构成了这个程序的内存映像。
    内存映像通常包括以下几个部分：
 
-   文本段（Text Segment）：包含程序的机器代码。
-
-   数据段（Data Segment）：包含程序的全局变量和静态变量。
-
-   堆（Heap）：用于动态内存分配，如 malloc、new 等操作。
-
-   栈（Stack）：用于存放函数调用的局部变量和返回地址。
+   - 文本段（Text Segment）：包含程序的机器代码。
+   - 数据段（Data Segment）：包含程序的全局变量和静态变量。
+   - 堆（Heap）：用于动态内存分配，如 malloc、new 等操作。
+   - 栈（Stack）：用于存放函数调用的局部变量和返回地址。
 
 2. 定义 ``_start`` 函数。
 
@@ -493,6 +490,11 @@ _hang 代码段通常只在出现错误或特殊情况时才会执行。
 ``OUTPUT_ARCH( "riscv" )`` 指定了输出的目标架构为 RISC-V。
 ``ENTRY(_start)`` 指定了程序的入口点为 _start。
 
+.. attention::
+
+   ``ENTRY`` 指定的是程序的入口，而不是 CPU 启动的地址。
+
+
 ``SECTIONS`` 是链接脚本的一个命令，它用于定义程序的内存布局。
 在这个命令中，可以定义多个段（section），每个段都有一个名字和一个地址。
 
@@ -511,7 +513,7 @@ C-compatiable Version
 
 如果我们想在 bare-metal 的 RISC-V CPU 上兼容 C 代码编译出来的二进制文件，那么所需要的 bootloader 更为复杂。
 
-.. Tip::
+.. Hint::
 
    你可以参考 `这篇教程 <https://twilco.github.io/riscv-from-scratch/2019/04/27/riscv-from-scratch-2.html>`__ ，自己动手在 RISC-V CPU 上运行 C 代码。
 
