@@ -33,9 +33,9 @@ IP
 
 Vivado 中提供了许多外设和总线的 IP（Intellectual Property），因此我们首先需要生成这些 IP。
 
-.. note::
+.. attention::
 
-   你也可以不使用这些 IP，而使用自行编写的 RTL，但这并不常见。
+   我们最终不会使用 IP，需要替换为自己实现的 RTL。
 
 我们给出 CVA6 中是如何生成这些 IP 的。
 
@@ -221,12 +221,18 @@ Report
 Adjustment
 ^^^^^^^^^^^^^^^^^^^
 
-``<cva6>/Makefile``：``XILINX_PART`` ``XILINX_BOARD`` 修改。
+为了实现 FPGA 的移植，我们需要修改部分脚本和源文件。
 
-``<cva6>/corev_apu/fpga/Makefile``：注释掉 ips 中的 xlnx_mig_7_ddr3.xci。
-
-``<cva6>/corev_apu/fpga/scripts/run.tcl``：注释掉 read_ip 中的 xlnx_mig_7_ddr3.xci。
+- ``<cva6>/Makefile``：``XILINX_PART`` ``XILINX_BOARD`` 修改。
+- ``<cva6>/corev_apu/fpga/Makefile``：只保留 ips 中的 xlnx_clk_gen.xci、xlnx_axi_dwidth_converter_dm_master.xci 和 xlnx_axi_dwidth_converter_dm_slave.xci。
+- ``<cva6>/corev_apu/fpga/scripts/run.tcl``：注释掉 read_ip 中不需要的 ``.xci``。
 可以选择在 ``launch_runs`` 后添加选项 ``-jobs <cpu_core_nums>``。
+- ``<cva6>/corev_apu/fpga/src/ariane_xilinx.sv``：根据需求，注释掉不需要的部分。
+- ``<cva6>/corev_apu/fpga/src/ariane_peripherals_xilinx.sv``：根据需求，注释掉不需要的部分。
+
+.. Hint::
+
+   建议将时钟信号引出，约束到 led 上，以便观察时钟信号是否存在。
 
 Boot
 ----------------
@@ -841,15 +847,236 @@ Debug
 Tools
 ^^^^^^^^^^^^
 
+GDB
+#############
+
+GDB 是 GNU 调试器（GNU Debugger）的缩写，是一个功能强大且广泛使用的开源调试工具。
+GDB旨在帮助开发人员诊断和修复程序中的错误，在程序运行时提供功能丰富的调试和分析功能。
+
+.. attention::
+
+   我们需要使用 RISC-V 的 GDB，它的可执行文件全名为 ``riscv-none-elf-gdb``，应该位于 ``<riscv-gcc-toolchain>/bin`` 下。
+
+.. Tip::
+
+   如果你想查阅有关 OpenOCD 的使用方法，请参考 `官方文档 <https://www.eecs.umich.edu/courses/eecs373/readings/Debugger.pdf>`__ 。
+
 OpenOCD
-****************
+##############
+
+OpenOCD（Open On-Chip Debugger）是一个开源项目，旨在提供针对嵌入式系统的调试、仿真和编程解决方案。
+它可以与多种调试适配器和芯片配合使用，支持多种处理器架构和调试协议。
+
+RISC-V 官方推荐的调试平台即为 OpenOCD，因此我们也采用 OpenOCD 作为我们 SoC 的调试工具。
+安装方法如下：
+
+.. code-block::
+
+   $ git clone https://github.com/riscv/riscv-openocd
+   $ sudo apt-get install libftdi-dev libusb-1.0-0 libusb-1.0-0-dev autoconf automake texinfo
+   $ ./bootstrap
+   $ ./configure --enable-ftdi
+   $ make -j<number of your cpus>
+   $ sudo make install
+
+如果你安装成功，执行如下指令，你会看到类似的输出：
+
+.. code-block::
+
+   $ which openocd
+   /usr/local/bin/openocd
+   $ openocd -v
+   Open On-Chip Debugger 0.12.0+dev-03598-g78a719fad (2024-01-20-05:43)
+   Licensed under GNU GPL v2
+   For bug reports, read
+           http://openocd.org/doc/doxygen/bugs.html
+
+.. Tip::
+
+   如果你想查阅有关 OpenOCD 的使用方法，请参考 `官方文档 <https://openocd.org/doc/pdf/openocd.pdf>`__ 。
+
+JTAG Adapter
+#################
+
+OpenOCD 可以看作调试主机（Debug Host）所运行的一个软件，它一般通过主机的 USB 接口发送信号。
+我们所实现的 SoC 对外的调试接口是 JTAG（joint Test Action Group，是一种用于测试集成电路的标准接口和协议）。
+二者之间需要 JTAG Adapter 用于信号的格式转换。
+
+我们所使用的 JTAG Adapter 中最关键的芯片称为 `FTDI <https://ftdichip.com/wp-content/uploads/2020/07/DS_FT232H.pdf>`__ （Future Technology Devices International），它负责输出 JTAG 信号。
+连接到 PC 后，``lsusb`` 的输出中会有如下一条：
+
+.. code-block::
+
+   Bus <bus id> Device <device id>: ID 0403:6014 Future Technology Devices International, Ltd FT232H Single HS USB-UART/FIFO IC
+
+Debug Module
+##############
+
+RISC-V 官方有 debug 的 `设计说明文档 <https://riscv.org/wp-content/uploads/2019/03/riscv-debug-release.pdf>`__ ，类似于 ISA，是一种规范。
+
+.. figure:: ../img/debugsys_schematic.svg
+   :align: center
+
+调试系统与多个组件交互，接下来我们将对此进行描述。
+调试模块通过核心接口（Core Interface）与被调试的 hart（hardware thread，对于没有超线程支持的 CPU 来说，指的就是一个 CPU 核） 进行交互，通过其总线主机（Bus Host）和系统总线进行交互，并通过调试模块接口 (DMI) 与调试传输模块（DTM）进行交互。
+
+JTAG
+***************
+
+与我们直接交互的软件为调试器（例如 GDB），它运行在调试主机上。
+调试器与调试转换器（例如 OpenOCD）通信，调试转换器与调试传输硬件（例如 USB-JTAG 适配器）通信。
+调试传输硬件通过 JTAG 信号连接到测试平台（待测试的SoC）的调试传输模块 (DTM)。
+DTM 使用调试模块接口 (DMI) 提供对调试模块 (DM) 的访问。
+
+外部调试器通过专用总线（调试模块接口 (DMI)）与调试模块的寄存器交互。
+这些寄存器称为“调试模块寄存器”（Debug Module Registers）。
 
 
+Core Interface
+********************
+
+调试模块发出调试请求（debug request）让 CPU 进入调试模式。
+CPU 接收到调试请求后，会跳转到 Debug ROM 中的暂停地址（Halt Address），将 ``pc`` 保存在 ``dpc`` 中，更新 ``dcsr``。
+CPU 要从调试模式返回，需要使用 ``DRET`` 指令，这条指令一般会位于 Debug ROM 中。
+
+Bus Interface
+********************
+
+调试模块作为 master 连接到系统总线，可以写入 SRAM，或验证其内容。
+
+调试存储器（Debug Memory）包含 Program Buffer、Debug ROM 和 一些 CSR。
+它作为 slave 被映射到总线的地址上。
 
 Flow
 ^^^^^^^^^^^^
 
+1. 烧录 bitstream 到 FPGA 上。
 
+在 Vivado GUI 中，打开 hardware manager，将生成的 bitstream 通过 jtag 接口烧录至 FPGA 中。
+
+2. 连接 PC 和 FPGA。
+
+JTAG Adapter 的 USB 端接入 PC，另一端接到实例化 SoC 中 JTAG 对应的约束管脚。
+
+3. 在 PC 中启动 OpenOCD。
+
+.. code-block::
+
+   $ cd <cva6>/corev_apu/fpga
+   $ sudo openocd -f ariane.cfg
+
+``ariane.cfg`` 中定义了如何通过 JTAG 接口对一个 RISC-V 设备进行调试。
+
+.. code-block::
+
+   adapter speed  100
+   adapter driver ftdi
+
+设置适配器的速度为 100 kHz，并指定其驱动为 FTDI。
+
+.. code-block::
+
+   ftdi vid_pid 0x0403 0x6014
+
+   # Channel 1 is taken by Xilinx JTAG
+   ftdi channel 0
+
+指定 FTDI 芯片的 VID 和 PID，这两个参数用于在 USB 设备中唯一标识一个设备。
+并指定使用 FTDI 芯片的哪个通道进行 JTAG 调试。
+
+.. code-block::
+
+   ftdi layout_init 0x0018 0x001b
+   ftdi layout_signal nTRST -ndata 0x0010
+
+设置 JTAG 的引脚布局。
+``ftdi layout_init`` 设置初始的引脚状态，``ftdi layout_signal`` 设置 nTRST 信号的引脚。
+
+.. code-block::
+
+   set _CHIPNAME riscv
+   jtag newtap $_CHIPNAME cpu -irlen 5
+   
+   set _TARGETNAME $_CHIPNAME.cpu
+   target create $_TARGETNAME riscv -chain-position $_TARGETNAME -coreid 0
+
+创建一个新的 JTAG TAP，并创建一个目标设备。
+这里的目标设备是一个 RISC-V 架构的 CPU。
+
+.. code-block::
+
+   gdb_report_data_abort enable
+   gdb_report_register_access_error enable
+   
+   riscv set_reset_timeout_sec 120
+   riscv set_command_timeout_sec 120
+
+设置一些 GDB 的参数，以及 RISC-V 的超时时间。
+
+.. code-block::
+   # prefer to use sba for system bus access
+   riscv set_mem_access progbuf sysbus abstract
+   
+   # Try enabling address translation (only works for newer versions)
+   if { [catch {riscv set_enable_virtual on} ] } {
+       echo "Warning: This version of OpenOCD does not support address translation. To debug on virtual addresses, please update to the latest version." }
+
+设置 RISC-V 的内存访问方式，优先使用 system bus access，尝试启用地址转换功能。
+
+.. code-block::
+
+   init
+   halt
+   echo "Ready for Remote Connections"
+
+执行 ``init`` 和 ``halt`` 指令，初始化 JTAG 调试器并暂停目标设备的运行。
+
+如果你能成功启动 OpenOCD，终端中会输出如下信息：
+
+.. code-block::
+
+   Open On-Chip Debugger 0.12.0+dev-03598-g78a719fad (2024-01-20-05:43)
+   Licensed under GNU GPL v2
+   For bug reports, read
+           http://openocd.org/doc/doxygen/bugs.html
+   Info : auto-selecting first available session transport "jtag". To override use 'transport select <transport>'.
+   Info : clock speed 100 kHz
+   Info : JTAG tap: riscv.cpu tap/device found: 0x00000001 (mfg: 0x000 (<invalid>), part: 0x0000, ver: 0x0)
+   Info : [riscv.cpu] datacount=2 progbufsize=8
+   Info : [riscv.cpu] Examined RISC-V core
+   Info : [riscv.cpu]  XLEN=64, misa=0x800000000014112d
+   [riscv.cpu] Target successfully examined.
+   Info : [riscv.cpu] Examination succeed
+   Info : starting gdb server for riscv.cpu on 3333
+   Info : Listening on port 3333 for gdb connections
+   Ready for Remote Connections
+   Info : Listening on port 6666 for tcl connections
+   Info : Listening on port 4444 for telnet connections
+
+4. 使用 gdb 连接 OpenOCD。
+
+.. code-block::
+
+   $ <riscv-gcc-toolchain>/bin/riscv-none-elf-gdb /path/to/elf
+   GNU gdb (GDB) 14.0.50.20230114-git
+   Copyright (C) 2022 Free Software Foundation, Inc.
+   License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+   This is free software: you are free to change and redistribute it.
+   There is NO WARRANTY, to the extent permitted by law.
+   Type "show copying" and "show warranty" for details.
+   This GDB was configured as "--host=x86_64-pc-linux-gnu --target=riscv-none-elf".
+   Type "show configuration" for configuration details.
+   For bug reporting instructions, please see:
+   <https://www.gnu.org/software/gdb/bugs/>.
+   Find the GDB manual and other documentation resources online at:
+       <http://www.gnu.org/software/gdb/documentation/>.
+   
+   For help, type "help".
+   Type "apropos word" to search for commands related to "word".
+   (gdb) target remote: 3333
+   (gdb)
+
+接着，你就可以通过 GDB 调试程序和访问内存了。
 
 .. note::
 
