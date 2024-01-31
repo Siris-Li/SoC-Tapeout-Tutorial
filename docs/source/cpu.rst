@@ -42,7 +42,7 @@ Privilege
 ^^^^^^^^^^^^^^^^^
 
 
-`RISC-V 官方文档 <https://riscv.org/technical/specifications/>`__ 通常分为两大部分：非特权指令集（Unprivileged ISA）和特权指令集（Privileged ISA）。
+`RISC-V 官方文档 <https://riscv.org/technical/specifications/>`__ 分为两大部分：非特权指令集（Unprivileged ISA）和特权指令集（Privileged ISA）。
 
 Unprivileged ISA
 #################
@@ -63,7 +63,8 @@ Privileged ISA
 
 .. note::
 
-    实际上简单的 RISC-V 微控制器仅支持 M 模式，我们流片的 CPU 就属于这一类。
+    实际上简单的 RISC-V 微控制器仅支持 M 模式。
+	我们流片的 CPU 支持 U、S、M 模式，可以启动 Linux。
 
 
 Control Status Register
@@ -92,7 +93,7 @@ Compiler & Assembler
 编译器负责将高级语言转换成汇编，汇编器负责将汇编转换成机器码。
 汇编器的作用不仅是用处理器可理解的指令生成目标代码，还支持一些对汇编语言程序员或编译器开发者有用的操作。
 这类操作是常规指令的巧妙特例，称为伪指令。
-最经典的例子为 :code:`nop`，它在RISC-V中由 :code:`addi x0, x0, 0` 实现。
+最经典的例子为 :code:`nop`，它在 RISC-V 中由 :code:`addi x0, x0, 0` 实现。
 
 .. note::
 
@@ -151,7 +152,7 @@ Linker
 启动文件（Start Files）是一些特殊的对象文件，它们包含了程序启动时需要执行的一些初始化代码。
 例如，C 程序的入口点实际上是一个名为 start 或 _start 的函数，这个函数在启动文件中定义，它会设置好运行环境后再调用 main 函数。
 具体的启动文件取决于你的编译器和操作系统。
-例如，在使用 GCC 编译器的 Linux 系统中，启动文件通常是 crt1.o、crti.o、crtbegin.o、crtend.o 和 crtn.o。
+例如，在使用 GCC 编译器的 Linux 系统中，启动文件通常是 ``crt1.o``、``crti.o``、``crtbegin.o``、``crtend.o`` 和 ``crtn.o``。
 这些文件中的代码会设置堆栈，初始化全局变量，调用全局构造函数，等等。
 
 .. note::
@@ -181,12 +182,11 @@ Loader
 可执行文件可以接收命令行参数。这些参数在程序启动时通过 main 函数的参数传递给程序。
 main 函数的原型为 ``int main(argc, *argv[])``。
 
-其中，argc 是命令行参数的数量，argv 是一个指向字符指针数组的指针，该数组包含了所有的命令行参数。
-argv[0] 是程序的名称，argv[1] 是第一个命令行参数，以此类推。
-最后一个元素 argv[argc] 是一个空指针。
+其中，``argc`` 是命令行参数的数量，``argv`` 是一个指向字符指针数组的指针，该数组包含了所有的命令行参数。
+``argv[0]`` 是程序的名称，``argv[1]`` 是第一个命令行参数，以此类推。
+最后一个元素 ``argv[argc]`` 是一个空指针。
 
-例如，如果你的程序名为 ``prog``，并且你通过以下方式启动它：``./prog arg1 arg2``，
-那么 argc 将为 3，argv[0] 将为 ./prog，argv[1] 将为 arg1，argv[2] 将为 arg2。
+例如，如果你的程序名为 ``prog``，并且你通过以下方式启动它：``./prog arg1 arg2``，那么 ``argc`` 将为 3，``argv[0]`` 将为 ./prog，``argv[1]`` 将为 arg1，``argv[2]`` 将为 arg2。
 
 .. note::
 
@@ -198,9 +198,9 @@ argv[0] 是程序的名称，argv[1] 是第一个命令行参数，以此类推�
 	这是因为主机和目标系统可能有不同的架构（例如，主机可能是 x86，而目标系统是 RISC-V），并且它们可能有不同的操作系统接口（例如，主机可能是 Linux，而目标系统是 bare-metal）。
 
 	因此，当你在 bare-metal RISC-V 环境中编译程序时，你需要一个为 RISC-V 架构和 bare-metal 环境定制的 C 库。
-	这个库应该包含适合你的目标环境的函数实现，包括 exit 函数。
+	这个库应该包含适合你的目标环境的函数实现，包括 ``exit`` 函数。
 
-	如果你的程序使用了 C 库中的 exit 函数，但你没有提供一个适合你的目标环境的 exit 函数实现，那么在链接阶段，链接器会报错，因为它找不到 exit 函数的定义。
+	如果你的程序使用了 C 库中的 ``exit`` 函数，但你没有提供一个适合你的目标环境的 ``exit`` 函数实现，那么在链接阶段，链接器会报错，因为它找不到 ``exit`` 函数的定义。
 
 .. Tip::
 
@@ -296,7 +296,7 @@ CVA6 Example
 `CVA6 <https://github.com/openhwgroup/cva6>`__ 是一个经过流片验证的开源 RISC-V CPU。
 我们以该 CPU 为例，介绍如何仿真开源的 CPU。
 
-.. note::
+.. attention::
 
 	如没有特别说明，默认运行环境为 Linux。
 	Linux 下很多操作都是在终端（terminal）中进行，终端中运行的是 shell，Ubuntu 默认的 shell 为 bash。
@@ -313,7 +313,19 @@ Setup
 
 	$ git clone https://github.com/openhwgroup/cva6.git
 	$ cd cva6
+	$ git checkout 1e78cc8e
 	$ git submodule update --init --recursive
+
+CVA6 一直在频繁地更新，这会导致一些端口定义改变或者文件结构调整。
+我们需要和服务器上的 CVA6 版本对齐，因此使用 ``git checkout`` 切换到特定的 commit。
+
+``git submodule update --init --recursive`` 是一个用于初始化和更新 Git 子模块的命令。
+这个命令的各个部分的含义如下：
+
+- ``git submodule``：这是 Git 的一个子命令，用于管理项目中的子模块。子模块允许你在一个 Git 仓库中包含另一个 Git 仓库。
+- ``update``：这是 git submodule 的一个子命令，用于更新子模块。它会将子模块更新到在主项目中记录的提交。
+- ``--init``：初始化子模块。如果子模块还没有被初始化（即，子模块的目录是空的），那么这个选项会先初始化子模块，然后再更新子模块。
+- ``--recursive``：递归地更新子模块。如果一个子模块中还包含有其他的子模块，那么这个选项会递归地初始化和更新所有的子模块。
 
 .. note::
 
@@ -328,7 +340,7 @@ Setup
 
 2. 安装 GCC 工具链。
 
-.. code-block:: shell
+.. code-block::
 
 	$ cd util/gcc-toolchain-builder
 	$ export RISCV=<your desire RISC-V toolchain directory>
@@ -341,9 +353,15 @@ Setup
 
 .. attention::
 
-	``riscv-none-elf-gcc`` 和 ``riscv64-unknown-elf-gcc`` 都是 RISC-V 架构的 GCC 编译器，但它们针对的 RISC-V 架构的位宽和目标系统可能有所不同。``riscv-none-elf-gcc``：这个编译器通常用于编译不依赖于特定操作系统的代码，例如嵌入式系统或裸机（bare-metal）系统的代码。"none" 表示没有目标操作系统。``riscv64-unknown-elf-gcc``：这个编译器针对的是 64 位的 RISC-V 架构，"64" 表示 64 位。"unknown" 表示目标系统的供应商未知。"elf" 表示目标文件格式是 ELF。这个编译器通常也用于编译不依赖于特定操作系统的代码。
+	``riscv-none-elf-gcc`` 和 ``riscv64-unknown-elf-gcc`` 都是 RISC-V 架构的 GCC 编译器，但它们针对的 RISC-V 架构的位宽和目标系统可能有所不同。
 
+	``riscv-none-elf-gcc``：这个编译器通常用于编译不依赖于特定操作系统的代码，例如嵌入式系统或裸机（bare-metal）系统的代码。
+	"none" 表示没有目标操作系统。
 
+	``riscv64-unknown-elf-gcc``：这个编译器针对的是 64 位的 RISC-V 架构，"64" 表示 64 位。
+	"unknown" 表示目标系统的供应商未知。
+	"elf" 表示目标文件格式是 ELF。
+	这个编译器通常也用于编译不依赖于特定操作系统的代码。
 
 .. note::
 
@@ -353,8 +371,15 @@ Setup
 .. Important::
 
 	``export`` 指令是非常常见的 shell 指令，它为 shell 创建了环境变量（environmnet variable）。
+	这个环境变量可以被当前的 shell 以及其子shell（例如运行 ``sh script.sh``，这里 ``script.sh`` 为当前 shell 的子 shell）所使用。
 	如果你不确定你是否真的创建了该变量，可以在 shell 中输入 ``echo $RISCV``，输出应该和你所设置的值一致。
+
+	如果不使用 ``export``，直接输入 ``RISCV=<your desire RISC-V toolchain directory>``，那么该变量不能被子 shell 使用。
+
 	强烈建议你去了解常见的环境变量以及其作用，例如 ``PATH``，这对理解 shell 来说很重要。
+	``PATH`` 简单来说，是 shell 搜索的默认路径。
+	例如你输入 ``curl ipinfo.io``，shell 会从 ``PATH`` 的所有路径下寻找名为 ``curl`` 的可执行文件。
+	你可以通过 ``which curl`` 指令来打印出该可执行文件的路径。
 
 3. 安装必要的包。
 
@@ -382,17 +407,18 @@ Setup
 	$ bash verif/regress/smoke-tests.sh
 
 在运行这条指令之前，请先查看该脚本的内容，试图理解这个脚本的行为。
-请参考 `CVA6 Repo Issue 1757 <https://github.com/openhwgroup/cva6/issues/1757>`__，理解并修改对应的脚本。
+实际上，该脚本首先会检查一些工具和测试样例是否下载，并安装没有下载的部分，然后批量运行测试。
 如果你安装成功，你会在 ``<cva6>/tools`` 路径下发现 Spike 和 Verilator 的文件夹。
-在此之后，你应该会发现 ``<cva6>/verif/regress/smoke-tests.sh`` 会报出 Error，这是因为环境变量设置的原因，你可以查看 shell 中的输出文本来定位具体是哪个环境变量。
 
-如果你并不想 Debug，那么请在运行这条指令之前先运行 ``source verif/sim/setup-env.sh``。
+.. attention::
 
-.. Hint::
-
-	如果你发现有时候运行 ``<cva6>/verif/regress/smoke-tests.sh`` 会报环境变量没有设置的问题，你可以研究一下 ``bash script.sh``，``sh script.sh``，``./script.sh`` 和 ``source script.sh`` 之间的联系和区别。
-	然后再研究 ``export VAR=xx`` 和 ``VAR=xx`` 的区别。
-	理解了上述两个区别之后，你就能明白为什么有时候环境变量丢失了。
+	实际上，你并不会有 ``<cva6>/tools/verilator*`` 这个文件夹。
+	你会发现 verilator 被直接安装到了 ``<cva6>/tools/`` 文件夹下。
+	这是因为，``<cva6>/verif/regress/smoke-tests.sh`` 在安装 verilator 前会先执行 ``source <cva6>/verif/sim/setup-env.sh``。
+	这个脚本是设置一些环境变量，其中包括 ``VERILATOR_INSTALL_DIR`` 这个变量。
+	如果你之前没有设置 ``VERILATOR_INSTALL_DIR``，那么它会自动设置为 ``<cva6>/tools/``路径下包含 verilator 的文件夹。
+	由于你是第一次运行，``<cva6>/tools/`` 是一个空目录，因此 ``VERILATOR_INSTALL_DIR`` 会被设置为 ``<cva6>/tools/``。
+	如果你有强迫症，可以在运行 ``<cva6>/verif/regress/smoke-tests.sh`` 之前设置 ``VERILATOR_INSTALL_DIR``。
 
 6. 运行回归测试。
 
@@ -443,9 +469,13 @@ CVA6 支持很多的仿真器，因此我们需要指定比较的两个仿真器
 	本小节中各种文件的路径请根据 shell 中的输出来寻找。
 	同时，我们强烈推荐你了解仿真过程中 Python 文件是怎么调用 Makefile，Makefile 是怎么调用 gcc，verilator 和 spike，最终完成仿真的。
 
-
 Verilator
 ###################
+
+``<cva6>/verif/sim/cva6.py`` 会生成调用 shell 的指令。
+其中一条指令为 ``make veri-testharness ...``。
+这会调用 ``<cva6>/verif/sim/Makefile`` 中 ``veri-testharness`` 标签对应的指令。
+这个标签中的指令会跳转到 ``<cva6>/Makefile`` 运行 ``verilate`` 标签对应的指令。
 
 调用 Verilator 的指令为
 
