@@ -1,7 +1,7 @@
 Frontend
 =====
 
-.. Tips::
+.. Tip::
    
    数字综合的规模很大，因此基本上依赖于脚本。
    如果想要深入理解脚本做了什么，请善用 ``man`` 指令。
@@ -9,7 +9,7 @@ Frontend
 从习惯上来说，我们一般把生成网表前的步骤称为前端（frontend）。
 我们数字前端所使用的 EDA 工具是 Cadence Genus。
 它的输入是 RTL 文件，输出是网表，进行的操作称为综合（synthesis）。
-在使用 Genus 综合前，首先需要把实例文件夹 ``build_adder`` 复制至你的工作目录下，之后我们称之为 ``<work-dir>``。
+在使用 Genus 综合前，首先需要把示例文件夹 ``build_adder`` 复制至你的工作目录下，之后我们称之为 ``<work-dir>``。
 以下是 ``<work-dir>`` 的目录结构：
 
 - ``rtl``: 存放要被综合的 RTL，并需要将 rtl 名字添加到 rtl/srcs.tcl 文件中。
