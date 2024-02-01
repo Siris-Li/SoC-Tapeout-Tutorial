@@ -17,7 +17,21 @@ SoC是一种单片计算机系统解决方案，在单个芯片上集成了处�
 Components
 --------------
 
+CLINT
+^^^^^^^^^^^^^^^
 
+全称为 Core-local Interrupt Controller，是 RISC-V 架构中用于处理本地中断的一个组件。
+CLINT 主要处理两种类型的中断：软件中断（Software Interrupts）和定时器中断（Timer Interrupts）。
+
+CLINT 中有三个寄存器被作为 slave 映射到总线地址上，分别为 ``msip``、``mtimecmp`` 和 ``mtime``。
+
+- ``msip``：Machine mode software interrupt（IPI，inter-process interrupt）。一个由软件设置来触发中断的寄存器，可以用来置位 ``mip`` 寄存器中的 ``MSIP`` 位。
+- ``mtimecmp``：Machine mode timer compare register。机器模式下的定时器比较寄存器，当 ``mtime`` 寄存器的值大于或等于 ``mtimecmp`` 寄存器的值时，就会产生一个定时器中断。这个中断会一直保持，直到通过写入 ``mtimecmp`` 寄存器来清除它。只有当中断被启用并且 ``mie`` 寄存器中的 ``MTIE`` 位被设置时，这个中断才会被接收。
+- ``mtime``：Timer register。这是一个 64 位的计数器，通常用于生成定时器中断。
+
+.. note::
+
+   ``mip`` 和 ``mie`` 都是 CSR，前者包含待处理中断的信息，后者包含中断使能位。
 
 
 
