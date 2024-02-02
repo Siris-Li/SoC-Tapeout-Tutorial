@@ -452,24 +452,6 @@ _hang 代码段通常只在出现错误或特殊情况时才会执行。
 
    汇编文件和链接器脚本均参考 ``<cva6>/corev_apu/bootrom`` 中的文件。
 
-C-compatiable Version
-####################
-
-.. Caution::
-
-   这部分内容已被废弃，和 SoC 流片无关。
-   如感兴趣，可以阅读。
-
-如果我们想在 bare-metal 的 RISC-V CPU 上兼容 C 代码编译出来的二进制文件，那么所需要的 bootloader 更为复杂。
-
-.. Hint::
-
-   你可以参考 `这篇教程 <https://twilco.github.io/riscv-from-scratch/2019/04/27/riscv-from-scratch-2.html>`__ ，自己动手在 RISC-V CPU 上运行 C 代码。
-
-
-
-
-
 Debug
 ----------------
 
