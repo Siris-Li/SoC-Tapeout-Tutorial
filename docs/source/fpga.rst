@@ -486,7 +486,13 @@ CVA6 Example
 当运行到跳转指令时，CPU 会跳转至 SRAM 的基地址。
 SRAM 中的数据在上电时被初始化为0，因此 CPU 识别到其为非法指令（illegal instruction），会抛出异常（exception），同时更新 ``mtval`` ``mepc`` ``mcause`` 等 CSR。
 此时 CPU 会根据 ``mtvec`` 中的数据跳转至异常处理程序的基地址。
-CVA6 指定了该地址为 ``boot_addr + 0x40``，在我们的 bootloader 中，
+CVA6 指定了该地址为 ``boot_addr + 0x40``，在我们的 bootloader 中，异常处理程序被设置为了 ``wfi``（wait for interrupt）指令。
+
+.. Hint::
+
+   - ``mtval``：异常处理程序的基地址。
+   - ``mepc``：异常指令的地址。
+   - ``mcause``：CPU 异常的原因。
 
 Debug
 ----------------
