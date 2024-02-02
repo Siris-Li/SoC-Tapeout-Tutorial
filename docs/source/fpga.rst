@@ -430,7 +430,7 @@ Linker Script
    
        . = ROM_BASE;
        .text.start : { *(.text.start) }
-       . = ROM_BASE + 0x80;
+       . = ROM_BASE + 0x40;
        .text.hang : { *(.text.hang) }
    }
 
@@ -478,6 +478,15 @@ Compile
 - ``-nostdlib``：不链接标准库。
 - ``-static``：生成静态链接的可执行文件。
 - ``-Wl,--no-gc-sections``：在链接时不丢弃未使用的代码和数据段。
+
+CVA6 Example
+######################
+
+使用上述 bootloader，并将 CVA6 的启动地址指向 BootRom 的基地址，上电之后 CPU 便会顺序执行 bootloader 中的指令。
+当运行到跳转指令时，CPU 会跳转至 SRAM 的基地址。
+SRAM 中的数据在上电时被初始化为0，因此 CPU 识别到其为非法指令（illegal instruction），会抛出异常（exception），同时更新 ``mtval`` ``mepc`` ``mcause`` 等 CSR。
+此时 CPU 会根据 ``mtvec`` 中的数据跳转至异常处理程序的基地址。
+CVA6 指定了该地址为 ``boot_addr + 0x40``，在我们的 bootloader 中，
 
 Debug
 ----------------
