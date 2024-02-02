@@ -416,7 +416,7 @@ CVA6 一直在频繁地更新，这会导致一些端口定义改变或者文件
 	你会发现 verilator 被直接安装到了 ``<cva6>/tools/`` 文件夹下。
 	这是因为，``<cva6>/verif/regress/smoke-tests.sh`` 在安装 verilator 前会先执行 ``source <cva6>/verif/sim/setup-env.sh``。
 	这个脚本是设置一些环境变量，其中包括 ``VERILATOR_INSTALL_DIR`` 这个变量。
-	如果你之前没有设置 ``VERILATOR_INSTALL_DIR``，那么它会自动设置为 ``<cva6>/tools/``路径下包含 verilator 的文件夹。
+	如果你之前没有设置 ``VERILATOR_INSTALL_DIR``，那么它会自动设置为 ``<cva6>/tools/`` 路径下包含 verilator 的文件夹。
 	由于你是第一次运行，``<cva6>/tools/`` 是一个空目录，因此 ``VERILATOR_INSTALL_DIR`` 会被设置为 ``<cva6>/tools/``。
 	如果你有强迫症，可以在运行 ``<cva6>/verif/regress/smoke-tests.sh`` 之前设置 ``VERILATOR_INSTALL_DIR``。
 
