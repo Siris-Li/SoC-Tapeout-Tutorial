@@ -478,7 +478,7 @@ gcc 执行的指令有两条，第一条为：
 
 	<cva6>/gcc-toolchain/bin/riscv-none-elf-gcc ../tests/custom/hello_world/hello_world.c          -I<cva6>/verif/sim/dv/user_extension           -T../tests/custom/common/test.ld -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -g ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S -lgcc -I../tests/custom/env -I../tests/custom/common -o <cva6>/verif/sim/<out_date>/directed_c_tests/hello_world.o  -march=rv32imac_zba_zbb_zbs_zbc_zicsr_zifencei -mabi=ilp32
 
-- ``-I/home/sirisli/cva6/verif/sim/dv/user_extension``：指定包含文件的搜索路径。
+- ``-I<cva6>/verif/sim/dv/user_extension``：指定包含文件的搜索路径。
 - ``-T../tests/custom/common/test.ld``：指定链接器脚本。
 - ``-static``：生成静态链接的可执行文件。
 - ``-mcmodel=medany``：指定代码模型。
@@ -489,6 +489,14 @@ gcc 执行的指令有两条，第一条为：
 - ``-o``：指定输出文件的路径和名称。
 - ``-march=rv32imac_zba_zbb_zbs_zbc_zicsr_zifencei -mabi=ilp32``：指定目标架构和 ABI。
 
+第二条为：
+
+.. code-block::
+
+	<cva6>/gcc-toolchain/bin/riscv-none-elf-objcopy -O binary <cva6>/verif/sim/<out_date>/directed_c_tests/hello_world.o <cva6>/verif/sim/<out_date>/directed_c_tests/hello_world.bin
+
+它将目标文件 ``hello_world.o`` 转换为二进制文件 ``hello_world.bin``。
+这个二进制文件可以直接加载到内存中执行，或者烧写到硬件设备中。
 
 
 Verilator
