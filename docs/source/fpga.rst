@@ -312,6 +312,9 @@ First Stage Bootloader
 Bootcode Generation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Assembly
+#############
+
 下面是一个名为 ``bootrom.S`` 的汇编语言文件，它包含了一个简单的 bootloader。
 
 .. code-block::
@@ -414,6 +417,9 @@ mhartid 寄存器包含了当前硬件线程的 ID。
 _hang 代码段通常只在出现错误或特殊情况时才会执行。
 例如，如果在尝试跳转到主内存执行程序时发生错误，或者在特定的硬件事件（如电源管理事件）发生时，程序可能会跳转到 _hang 代码段。
 
+Linker Script
+##################
+
 为了能够成功解析 ``bootrom.S`` 中符号的地址，我们还需要自定义链接器脚本（linker script） ``linker.ld``。
 
 .. code-block::
@@ -451,6 +457,27 @@ _hang 代码段通常只在出现错误或特殊情况时才会执行。
 .. Hint::
 
    汇编文件和链接器脚本均参考 ``<cva6>/corev_apu/bootrom`` 中的文件。
+
+Compile
+######################
+
+编译所用的指令如下：
+
+.. code-block::
+
+   riscv-none-elf-gcc -Tlinker.ld -Os -ggdb -march=rv64im -mabi=lp64 -Wall -mcmodel=medany -mexplicit-relocs bootrom.S -nostdlib -static -Wl,--no-gc-sections -o bootrom.elf
+
+- ``-Tlinker.ld``：使用 linker.ld 文件作为链接脚本。链接脚本用于控制如何将各个代码和数据段映射到目标内存。
+- ``-Os``：进行优化，以使生成的代码尽可能小。
+- ``-ggdb``：生成可以被 GDB 调试器使用的调试信息。
+- ``-march=rv64im``：指定目标架构为 RISC-V，具有 64 位地址空间和整数乘法和除法指令。
+- ``-mabi=lp64``：指定目标 ABI（应用二进制接口）为 LP64，这意味着 long 和指针类型都是 64 位的。
+- ``-Wall``：生成所有的警告信息。
+- ``-mcmodel=medany``：指定代码模型为 medany，这意味着代码可以被加载到任何地址。
+- ``-mexplicit-relocs``：生成显式的重定位信息。
+- ``-nostdlib``：不链接标准库。
+- ``-static``：生成静态链接的可执行文件。
+- ``-Wl,--no-gc-sections``：在链接时不丢弃未使用的代码和数据段。
 
 Debug
 ----------------
@@ -688,6 +715,21 @@ JTAG Adapter 的 USB 端接入 PC，另一端接到实例化 SoC 中 JTAG 对应
    (gdb)
 
 接着，你就可以通过 GDB 调试程序和访问内存了。
+一些常用的 GDB 指令如下：
+
+- ``x/10w 0x12345``：以字（4 字节）为单位，查看地址 0x12345 开始的 10 个字的内容。
+- ``x/i``：一种特殊的格式，用于将内存中的内容解释为机器指令。i 代表 "instruction"，即指令。例如，`x/i $pc` 这条命令会显示程序计数器（PC）当前指向的机器指令。
+- ``info registers``：列出所有寄存器的值。
+- ``set {int}0x54321 = 0xabcdf``：将地址 0x54321 处的 4 个字节的内容设置为 16 进制的 abcdf。
+- ``stepi``：执行 pc 地址对应的指令。
+
+.. Hint::
+
+   ROM（只读存储器）是一种只能读取不能写入的存储器。
+   如果你试图在 GDB 中使用 ``set`` 命令写入 ROM 地址的数据，GDB 可能不会显示错误，但实际上数据并没有被写入 ROM。
+   当你使用 ``x`` 命令读取该地址时，GDB 可能会显示你之前尝试写入的数据，但这只是 GDB 内部状态的一部分，不代表实际的硬件状态。
+   在真实的硬件中，ROM 的内容在写入后就不能更改。
+
 
 .. note::
 
