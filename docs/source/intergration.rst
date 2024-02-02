@@ -29,10 +29,18 @@ CLINT 中有三个寄存器被作为 slave 映射到总线地址上，分别为 
 - ``mtimecmp``：Machine mode timer compare register。机器模式下的定时器比较寄存器，当 ``mtime`` 寄存器的值大于或等于 ``mtimecmp`` 寄存器的值时，就会产生一个定时器中断。这个中断会一直保持，直到通过写入 ``mtimecmp`` 寄存器来清除它。只有当中断被启用并且 ``mie`` 寄存器中的 ``MTIE`` 位被设置时，这个中断才会被接收。
 - ``mtime``：Timer register。这是一个 64 位的计数器，通常用于生成定时器中断。
 
+.. attention::
+
+   CLINT 对 CPU 发起的中断不会经过总线。
+
 .. note::
 
    ``mip`` 和 ``mie`` 都是 CSR，前者包含待处理中断的信息，后者包含中断使能位。
 
+PLIC
+^^^^^^^^^^^^^^^^
+
+全称为 Platform-Level Interrupt Controller，它将全局中断源（通常是 I/O 设备）连接到中断目标（通常是 CPU）。
 
 
 Intergration
