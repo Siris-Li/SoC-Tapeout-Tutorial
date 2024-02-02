@@ -469,6 +469,28 @@ CVA6 支持很多的仿真器，因此我们需要指定比较的两个仿真器
 	本小节中各种文件的路径请根据 shell 中的输出来寻找。
 	同时，我们强烈推荐你了解仿真过程中 Python 文件是怎么调用 Makefile，Makefile 是怎么调用 gcc，verilator 和 spike，最终完成仿真的。
 
+GCC
+################
+
+gcc 执行的指令有两条，第一条为：
+
+.. code-block::
+
+	<cva6>/gcc-toolchain/bin/riscv-none-elf-gcc ../tests/custom/hello_world/hello_world.c          -I<cva6>/verif/sim/dv/user_extension           -T../tests/custom/common/test.ld -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -g ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S -lgcc -I../tests/custom/env -I../tests/custom/common -o <cva6>/verif/sim/<out_date>/directed_c_tests/hello_world.o  -march=rv32imac_zba_zbb_zbs_zbc_zicsr_zifencei -mabi=ilp32
+
+- ``-I/home/sirisli/cva6/verif/sim/dv/user_extension``：指定包含文件的搜索路径。
+- ``-T../tests/custom/common/test.ld``：指定链接器脚本。
+- ``-static``：生成静态链接的可执行文件。
+- ``-mcmodel=medany``：指定代码模型。
+- ``-fvisibility=hidden -nostdlib -nostartfiles``：用于控制链接过程，包括不链接标准库、不链接启动文件。
+- ``-g``：生成调试信息。
+- ``-lgcc``：链接 GCC 的运行时库。
+- ``-I../tests/custom/env -I../tests/custom/common``：指定其他的包含文件搜索路径。
+- ``-o``：指定输出文件的路径和名称。
+- ``-march=rv32imac_zba_zbb_zbs_zbc_zicsr_zifencei -mabi=ilp32``：指定目标架构和 ABI。
+
+
+
 Verilator
 ###################
 
