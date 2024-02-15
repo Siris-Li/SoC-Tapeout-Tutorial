@@ -533,7 +533,8 @@ RISC-V 官方推荐的调试平台即为 OpenOCD，因此我们也采用 OpenOCD
 .. code-block::
 
    $ git clone https://github.com/riscv/riscv-openocd
-   $ sudo apt-get install libftdi-dev libusb-1.0-0 libusb-1.0-0-dev autoconf automake texinfo
+   $ sudo apt-get install libftdi-dev libusb-1.0-0 libusb-1.0-0-dev autoconf automake texinfo pkg-config
+   $ cd riscv-openocd
    $ ./bootstrap
    $ ./configure --enable-ftdi
    $ make -j<number of your cpus>
