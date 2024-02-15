@@ -85,7 +85,14 @@ CPU 通过地址访问外围设备，因此需要给每个设备分配地址空�
 - C (Cached)：这个属性指示相应的内存区域可以被缓存。启用缓存可以显著提高数据访问速度，因为缓存是一种更快的存储。在许多系统中，CPU 会将频繁访问的数据存储在缓存中。然而，并不是所有的内存区域都适合缓存，特别是映射到外设的区域，这些区域可能需要直接访问以保证数据的实时性和一致性。
 
 
+Intergration
+--------------
 
+集成新设备时需要修改的内容：
+
+- ``<cva6>/corev_apu/fpga/src/ariane_xilinx.sv: // idempotent region``：非幂等区域的定义。
+- ``<cva6>/corev_apu/fpga/src/ariane_xilinx.sv: assign addr_map =``：AXI 地址映射定义。
+- ``<cva6>/corev_apu/tb/ariane_soc_pkg.sv``：新设备的地址映射定义。
 
 .. note::
 
