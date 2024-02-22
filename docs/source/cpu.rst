@@ -34,7 +34,7 @@ RISC-V 编译器得知当前硬件包含哪些扩展后，便可为该硬件生�
 
 .. note::
 
-	RV32MFDA 是 RISC-V 的标准扩展，它们与 RV32I 统称为 RV32G（G 代表 general）。
+	RV32MFDA 以及 Zicsr，Zifencei 是 RISC-V 的标准扩展，它们与 RV32I 统称为 RV32G（G 代表 general），及 RV32G = RV32IMAFDZicsr_Zifencei。
 	如果你注意过 ``RISC-V gcc`` 中的 ``-march`` 选项，你可能会发现它形如 ``rv32imac_zba_zbb_zbs_zbc_zicsr_zifencei``。
 	这是因为，除了标准扩展之外，还有其他可选扩展，例如 ``zb*`` 指的是 “B” 标准扩展（Bit-manipulation）。
 
